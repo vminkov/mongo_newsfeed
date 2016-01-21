@@ -68,4 +68,20 @@ public class User {
 	public void setAvatar(String avatar) {
 		this.avatar = avatar;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null){
+			return false;
+		}
+		
+		if(!(obj instanceof User)){
+			return false;
+		}
+		 
+		User another = (User) obj;
+
+		return this.username != null && this.password != null
+				&& this.username.equals(another.username) && this.password.equals(another.password); 
+	}
 }

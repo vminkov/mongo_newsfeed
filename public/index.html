@@ -4,18 +4,35 @@
 <meta charset="UTF-8">
 <title>Newsfeed</title>
 </head>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="/common.js"></script>
+<script type="text/javascript">
+$.ajax({
+	url: "/feed/0",
+	dataType: "json",
+	headers: {"Authorization": readCookie("sessionId")},
+	success: function(data){
+		console.log(data);
+	}
+});
+
+function displayMessages(messages){
+	var messagesTable = $("#main");
+}
+
+</script>
 <body>
 	<table id="main">
 		<tbody>
 			<tr>
-				<th>Messages in top public:</th>
+				<th>Messages in feed:</th>
 			</tr>
 			<tr>
 				<td>Plain HTML</td>
 			</tr>
 			<tr>
 				<td>
-					<div style='text-align: center;'>${message}</div>
+					<div style='text-align: center;'></div>
 				</td>
 			</tr>
 		</tbody>

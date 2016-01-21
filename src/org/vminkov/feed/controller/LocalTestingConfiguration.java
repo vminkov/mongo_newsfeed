@@ -35,4 +35,9 @@ public class LocalTestingConfiguration {
 		instance = morphia.createDatastore(mongoClient, DATABASE_NAME);
 		return instance;
 	}
+	
+	@Bean
+	public UsersManager getUsersManager(){
+		return new UsersManager();
+	}
 }

@@ -6,29 +6,44 @@
 <style>
 div {
     height: 200px;
-    width: 400px;
+    width: 250px;
 
 	position: fixed;
 	top: 50%;
 	left: 50%;
 	margin-top: -100px;
-	margin-left: -200px;
+	margin-left: -125px;
 }
 
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="/common.js"></script>
 <script type="text/javascript">
 function onRegisterClick(){
-	var username, password;
+	var username, password, avatar;
 	username = $('#username').val();
 	password = $('#password').val();
 	
-	console.log(username + " " + password);
+	$.ajax({
+		url: "/user",
+		method: "POST",
+		dataType: "json",
+		data: JSON.stringify({username: username, password: password}),
+		contentType: "application/json",
+		success: function(data){
+			createCookie("sessionId", data.sessionId, 14);
+			window.location = "/index.html";
+		},
+		error: function(data){
+			alert(JSON.parse(data.responseText)["message"]);
+		}
+	});
 }
 </script>
 </head>
 <body>
 	<div style='text-align: center;'>
+		<h2>Register</h2>
 		<table>
 			<tr>
 				<td>Username:</td>

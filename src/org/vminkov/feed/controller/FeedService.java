@@ -23,9 +23,11 @@ public class FeedService {
 			@PathVariable("page") Integer pageNum){
 		User user = usersManager.validateSession(sessionId);
 		
-		Query<Message> find = datastore.find(Message.class);
-		Query<Message> offset = find.offset(pageNum * PAGE_SIZE);
-		Query<Message> limit = offset.limit(PAGE_SIZE);
-		return limit.asList();
+		Query<Message> limit = datastore.find(Message.class)
+				.order("-date")
+				.offset(pageNum * PAGE_SIZE)
+				.limit(PAGE_SIZE);
+		return limit
+				.asList();
 	}
 }

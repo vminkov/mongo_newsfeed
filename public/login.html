@@ -25,7 +25,7 @@ function onLogInClick(){
 	password = $('#password').val();
 	
 	$.ajax({
-		url: "/user",
+		url: "/session",
 		method: "PUT",
 		dataType: "json",
 		data: JSON.stringify({username: username, password: password}),

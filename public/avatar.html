@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mongo Newsfeed - Change avatar</title>
+<style>
+div {
+	height: 200px;
+	width: 250px;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	margin-top: -100px;
+	margin-left: -125px;
+}
+</style>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="/common.js"></script>
+<script type="text/javascript">
+	var sessionId = readCookie("sessionId");
+	if(!sessionId) {
+		window.location = "/login.html";
+	}else{
+		$.ajax({
+			headers: {"Authorization": sessionId},
+			url: "/session",
+			error: function(){
+				window.location = "/login.html";
+			}
+		});
+		
+		$(document).ready(function(){
+			$("#uploadForm").attr('action' , $("#uploadForm").attr('action') + "?sessionId=" + sessionId);
+		});
+	}	
+</script>
+</head>
+<body>
+	<div style='text-align: center;'>
+		<h2>Select image</h2>
+		<table>
+			<tr>
+				<td>
+					<form id="uploadForm" enctype="multipart/form-data" method="post" action="/upload">
+						<input name="file" type="file" id="avatar" />
+						<input type="submit"/>
+					</form>
+				</td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

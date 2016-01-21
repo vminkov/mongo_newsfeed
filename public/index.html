@@ -12,12 +12,19 @@ $.ajax({
 	dataType: "json",
 	headers: {"Authorization": readCookie("sessionId")},
 	success: function(data){
-		console.log(data);
+		displayMessages(data);
+	},error: {
+		window.location = "/login.html";
 	}
 });
 
 function displayMessages(messages){
-	var messagesTable = $("#main");
+	var body = $('#main > tbody');
+	body.children().remove();
+	
+	for(mess in messages){
+		body.append("<tr><td>" + messages[mess].text + "</td></tr>");
+	}
 }
 
 </script>

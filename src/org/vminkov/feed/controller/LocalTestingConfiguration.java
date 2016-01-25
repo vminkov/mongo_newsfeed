@@ -1,21 +1,21 @@
 package org.vminkov.feed.controller;
 
-import java.net.UnknownHostException;
-
+import org.bson.Document;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.mongodb.DB;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 @Configuration
 public class LocalTestingConfiguration {
+	private static final String USER = "user";
 	private static final String SERVER = "localhost";
 	private static final String DATABASE_NAME = "newsfeed";
+	private static final String MESSAGE = "message";
 
 	@Bean
 	public Morphia getMorphia() {
@@ -30,11 +30,7 @@ public class LocalTestingConfiguration {
 		Datastore instance;
 
 		MongoClient mongoClient;
-		try {
-			mongoClient = new MongoClient(SERVER);
-		} catch (UnknownHostException e) {
-			throw new RuntimeException(e);
-		}
+		mongoClient = new MongoClient(SERVER);
 		instance = morphia.createDatastore(mongoClient, DATABASE_NAME);
 		return instance;
 	}
@@ -44,14 +40,21 @@ public class LocalTestingConfiguration {
 		return new UsersManager();
 	}
 
+	@SuppressWarnings("resource")
 	@Bean
-	public DB getMongoDB() {
+	public MongoDatabase getMongoDB() {
 		MongoClient mongoClient;
-		try {
-			mongoClient = new MongoClient(SERVER);
-		} catch (UnknownHostException e) {
-			throw new RuntimeException(e);
-		}
-		return mongoClient.getDB("newsfeed");
+		mongoClient = new MongoClient(SERVER);
+		return mongoClient.getDatabase(DATABASE_NAME);
+	}
+
+	@Bean(name="messagesCollection")
+	public MongoCollection<Document> getMessagesCollection(MongoDatabase mongoDB){
+		return mongoDB.getCollection(MESSAGE);
+	}
+	
+	@Bean(name="usersCollection")
+	public MongoCollection<Document> getUsersCollection(MongoDatabase mongoDB){
+		return mongoDB.getCollection(USER);
 	}
 }

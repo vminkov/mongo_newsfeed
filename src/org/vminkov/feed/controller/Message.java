@@ -12,13 +12,13 @@ public class Message {
 	@Id
 	private String _id;
 
-	@Reference
+	@Reference(ignoreMissing=true)
 	private User author;
 
 	private String text; 
 	private Date date;
 
-	@Reference
+	@Reference(ignoreMissing=true)
 	private List<User> likes;
 
 	public Message(String text, User author, Date sentDate, List<User> likes, String _id) {

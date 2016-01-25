@@ -3,44 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <title>Newsfeed</title>
+<style type="text/css">
+#main {
+	height: 600px;
+	width: 450px;
+	position: fixed;
+	top: 20%;
+	left: 45%;
+	margin-top: -100px;
+	margin-left: -125px;
+}
+</style>
 </head>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
-$.ajax({
-	url: "/feed/0",
-	dataType: "json",
-	headers: {"Authorization": readCookie("sessionId")},
-	success: function(data){
-		displayMessages(data);
-	},error: {
-		window.location = "/login.html";
+	function reloadFeed() {
+		$.ajax({
+			url : "/feed/0",
+			dataType : "json",
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : function(data) {
+				displayMessages(data);
+			},
+			error : function() {
+				window.location = "/login.html";
+			}
+		});
 	}
-});
 
-function displayMessages(messages){
-	var body = $('#main > tbody');
-	body.children().remove();
+	function displayMessages(messages) {
+		var body = $('#feed > tbody');
+		body.children().remove();
+
+		for (mess in messages) {
+			var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
+			messHtml += "<td><div>" + messages[mess].author + "</div></td>";
+			messHtml += "<td>" + messages[mess].text + "</td>";
+			if(messages[mess]["liked"]){
+				messHtml += "<td><a class='unlike' href='#'>D<a/></td>";
+			}else{
+				messHtml += "<td><a class='like' href='#'>L<a/></td>";
+			} 
+			messHtml += "</tr>";
+			
+			body.append(messHtml);
+		}
+		
+		$(".like").click(function(){
+			var messageId = $(this).parents(".messageRow").attr('id');
+			vote(messageId, 'like');
+		});
+		$(".unlike").click(function(){
+			var messageId = $(this).parents(".messageRow").attr('id');
+			vote(messageId, 'unlike');
+		});
+	}
 	
-	for(mess in messages){
-		body.append("<tr><td>" + messages[mess].text + "</td></tr>");
+	function vote(messageId, vote){
+		$.ajax({
+			url : "/message/" + messageId + "/" + vote,
+			method : "POST",
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : reloadFeed,
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
 	}
-}
 
+	function postMessage(messageText) {
+		$.ajax({
+			url : "/feed",
+			method : "POST",
+			contentType: "application/json",
+			data : JSON.stringify({
+				text : messageText
+			}),
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : reloadFeed,
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
+	}
+	
+	$(document).ready(function(){
+		$("#message").keypress(function (e) {
+			  if (e.which == 13) {
+				  postMessage(this.value);
+				  this.value = "";
+				  return false;
+			  }
+		});
+		
+		reloadFeed();
+		setInterval(reloadFeed, 5000);
+	})
 </script>
 <body>
 	<table id="main">
 		<tbody>
 			<tr>
-				<th>Messages in feed:</th>
-			</tr>
-			<tr>
-				<td>Plain HTML</td>
-			</tr>
-			<tr>
 				<td>
-					<div style='text-align: center;'></div>
+					<table id="feed">
+						<tbody>
+							<tr>
+								<td>NO CONNECTION TO SERVER</td>
+							</tr>
+						</tbody>
+					</table>
 				</td>
+			</tr>
+			<tr>
+				<td><input type="text" id="message"
+					style="width: 100%; height: 20px;"
+					placeholder="Type here..." /></td>
 			</tr>
 		</tbody>
 	</table>

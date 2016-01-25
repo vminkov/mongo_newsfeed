@@ -65,7 +65,7 @@ function someAuthorsIds(){
 
 	rand = Math.floor(Math.random() * authorsPool.length);
 	for(var i = 0; i < rand; i++){
-		someIds.push({$id: db.user.findOne({username: authorsPool[rand]})["_id"], $ref: "user"});
+		someIds.push(DBRef("user", db.user.findOne({username: authorsPool[rand]})["_id"]));
 	}
 
 	return someIds;
@@ -74,7 +74,9 @@ function someAuthorsIds(){
 for(var i = 0; i < 500; i++){
 	var author = db.user.findOne({username: authorsPool[Math.floor(Math.random() * authorsPool.length)]});
 	db.message.insert({
-		author: {$id: author._id, $ref: "user"},
+		author: 
+			DBRef("user", author._id),
+			//{$id: author._id, $ref: "user"},
 		text: "text message " + i,
 		date: new Date(),
 		likes: someAuthorsIds()

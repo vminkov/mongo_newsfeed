@@ -1,9 +1,11 @@
 package org.vminkov.feed.controller;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Base64;
 
+import org.bson.Document;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 @RestController
 public class UsersService {
 	@Autowired
-	private DB mongoDB;
-	
+	private MongoDatabase mongoDB;
+
 	@Autowired
 	private UsersManager usersManager;
 
@@ -33,24 +35,22 @@ public class UsersService {
 	private Datastore ds;
 
 	@RequestMapping(method = RequestMethod.POST, value = "/user")
-	public SessionData register(@RequestBody User toberegistered) {
-		if (!toberegistered.getUsername().matches("^[a-z0-9_-]{3,15}$")) {
+	public SessionData register(@RequestBody LogInData toberegistered) {
+		if (!toberegistered.username.matches("^[a-z0-9_-]{3,15}$")) {
 			throw new RuntimeException("invalid username");
 		}
-		if (!toberegistered.getPassword().matches("^[a-z0-9_-]{6,15}$")) {
+		if (!toberegistered.password.matches("^[a-z0-9_-]{6,15}$")) {
 			throw new RuntimeException("invalid password");
 		}
-		if (toberegistered.getAvatar() == null || toberegistered.getAvatar().isEmpty()) {
-			throw new RuntimeException("invalid avatar");
-		}
 
-		if (ds.find(User.class).filter("username =", toberegistered.getUsername()).get() != null) {
+		if (ds.find(User.class).filter("username =", toberegistered.username).get() != null) {
 			throw new RuntimeException("username already taken");
 		}
 
-		ds.save(toberegistered);
+		User user = new User(null, toberegistered.username, toberegistered.password, "aidebe64==", new ArrayList<>());
+		ds.save(user);
 
-		return new SessionData(this.usersManager.addSession(toberegistered));
+		return new SessionData(this.usersManager.addSession(user));
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/session")
@@ -88,14 +88,13 @@ public class UsersService {
 		if (!file.isEmpty()) {
 			try {
 				byte[] bytes = file.getBytes();
-				
-				DBCollection collection = this.mongoDB.getCollection("user");
-				
-				
-				user.setAvatar(new String(bytes));
-				this.ds.updateFirst(this.ds.createQuery(User.class).filter("_id =", user.get_id()), user, false);
+				MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
+				userCollection.updateOne(new Document("username", user.getUsername()),
+						new Document("$set", new Document("avatar", Base64.getEncoder().encode(bytes))));
 
-				return ResponseEntity.created(new URI("/index.html")).build();
+				return new ResponseEntity(
+						"<html><head><meta http-equiv=\"refresh\" content=\"0; url=/index.html\" /></head></html>",
+						HttpStatus.MOVED_PERMANENTLY);
 			} catch (IOException e) {
 				return new ResponseEntity("{'status': 'failed to upload => " + e.getMessage() + "'}",
 						HttpStatus.INTERNAL_SERVER_ERROR);

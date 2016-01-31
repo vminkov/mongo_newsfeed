@@ -2,6 +2,7 @@ package org.vminkov.feed.controller;
 
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Reference;
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class User {
 
 	@Id
-	private String _id;
+	private ObjectId _id;
 	
 	private String username;
 	@JsonIgnore
@@ -22,7 +23,7 @@ public class User {
 	@Reference
 	private List<User> silenced;
 	
-	public User(String _id, String username, String password, String avatar, List<User> silenced) {
+	public User(ObjectId _id, String username, String password, String avatar, List<User> silenced) {
 		this._id = _id;
 		this.username = username;
 		this.password = password;
@@ -32,11 +33,11 @@ public class User {
 	
 	public User() {}
 
-	public String get_id() {
+	public ObjectId get_id() {
 		return _id;
 	}
 
-	public void set_id(String _id) {
+	public void set_id(ObjectId _id) {
 		this._id = _id;
 	}
 

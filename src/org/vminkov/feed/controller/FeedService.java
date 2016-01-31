@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,8 @@ public class FeedService {
 		@JsonProperty
 		String author;
 		@JsonProperty
+		String authorId;
+		@JsonProperty
 		String _id;
 		@JsonProperty
 		Date date;
@@ -75,12 +78,16 @@ public class FeedService {
 		public FeedMessage() {
 		}
 
-		public FeedMessage(User author, Date date, String text, boolean liked, List<User> likes, String _id) {
-			this.author = author == null ? null : author.getUsername();
+		public FeedMessage(User author, Date date, String text, boolean liked, List<User> likes, ObjectId _id) {
+			if(this.author != null){
+				this.author = author.getUsername();
+				this.authorId = author.get_id().toString();
+			}
+			
 			this.date = date;
 			this.text = text;
 			this.liked = liked;
-			this._id = _id;
+			this._id = _id.toString();
 			
 			this.likes = new ArrayList<>();
 			for(User whoLikedit : likes){

@@ -34,19 +34,25 @@
 		});
 	}
 
+	function getAuthorMessageCell(author, authorId){
+		return "<td class='authorRow'><div class='" + authorId + "'>" + author + "</div></td>"
+	}
+	
 	function displayMessages(messages) {
 		var body = $('#feed > tbody');
 		body.children().remove();
 
 		for (mess in messages) {
 			var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
-			messHtml += "<td><div>" + messages[mess].author + "</div></td>";
+			messHtml += getAuthorMessageCell(messages[mess].author, messages[mess].authorId);
 			messHtml += "<td>" + messages[mess].text + "</td>";
 			if(messages[mess]["liked"]){
 				messHtml += "<td><a class='unlike' href='#'>D<a/></td>";
 			}else{
 				messHtml += "<td><a class='like' href='#'>L<a/></td>";
 			} 
+			messHtml += "<td><a class='silence' href='#'>silence<a/></td>";
+			
 			messHtml += "</tr>";
 			
 			body.append(messHtml);
@@ -60,11 +66,29 @@
 			var messageId = $(this).parents(".messageRow").attr('id');
 			vote(messageId, 'unlike');
 		});
+		$(".silence").click(function(){
+			var authorUsername =  $(this).parents(".messageRow").children(".authorRow").children("div").attr('class');
+			silence(authorUsername);
+		});
 	}
-	
+
 	function vote(messageId, vote){
 		$.ajax({
 			url : "/message/" + messageId + "/" + vote,
+			method : "POST",
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : reloadFeed,
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
+	}
+	
+	function silence(userId){
+		$.ajax({
+			url : "/user/" + userId + "/silence",
 			method : "POST",
 			headers : {
 				"Authorization" : readCookie("sessionId")

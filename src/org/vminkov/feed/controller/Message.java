@@ -3,6 +3,7 @@ package org.vminkov.feed.controller;
 import java.util.Date;
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Reference;
@@ -10,7 +11,7 @@ import org.mongodb.morphia.annotations.Reference;
 @Entity("message")
 public class Message {
 	@Id
-	private String _id;
+	private ObjectId  _id;
 
 	@Reference(ignoreMissing=true)
 	private User author;
@@ -18,10 +19,10 @@ public class Message {
 	private String text; 
 	private Date date;
 
-	@Reference(ignoreMissing=true)
+	@Reference
 	private List<User> likes;
 
-	public Message(String text, User author, Date sentDate, List<User> likes, String _id) {
+	public Message(String text, User author, Date sentDate, List<User> likes, ObjectId _id) {
 		this.text = text;
 		this.author = author;
 		this.date = sentDate;
@@ -64,7 +65,7 @@ public class Message {
 		this.date = date;
 	}
 
-	public String get_id() {
+	public ObjectId get_id() {
 		return _id;
 	}
 }

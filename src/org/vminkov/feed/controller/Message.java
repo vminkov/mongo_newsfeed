@@ -13,7 +13,7 @@ public class Message {
 	@Id
 	private ObjectId  _id;
 
-	@Reference(ignoreMissing=true)
+	@Reference
 	private User author;
 
 	private String text; 

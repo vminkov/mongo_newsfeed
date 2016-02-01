@@ -42,7 +42,10 @@ public class FeedService {
 			@PathVariable("page") Integer pageNum) {
 		User user = usersManager.validateSession(sessionId);
 
-		Query<Message> messagesQuery = this.ds.find(Message.class).order("-date").offset(PAGE_SIZE * pageNum)
+		Query<Message> messagesQuery = this.ds.find(Message.class)
+				.filter("author nin", 
+						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
+				.order("-date").offset(PAGE_SIZE * pageNum)
 				.limit(PAGE_SIZE);
 		List<Message> messages = messagesQuery.asList();
 
@@ -53,6 +56,12 @@ public class FeedService {
 		List<FeedMessage> restMess = new ArrayList<>();
 		for (Message mess : dbMessages) {
 			boolean liked = mess.getLikes().contains(currentUser);
+			
+			if(mess.getAuthor() == null){
+				System.err.println("null author for " + mess.get_id());
+				continue;
+			}
+			
 			restMess.add(new FeedMessage(mess.getAuthor(), mess.getDate(), mess.getText(), liked, mess.getLikes(), mess.get_id()));
 		}
 
@@ -79,7 +88,7 @@ public class FeedService {
 		}
 
 		public FeedMessage(User author, Date date, String text, boolean liked, List<User> likes, ObjectId _id) {
-			if(this.author != null){
+			if(author != null){
 				this.author = author.getUsername();
 				this.authorId = author.get_id().toString();
 			}

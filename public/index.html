@@ -13,14 +13,19 @@
 	margin-top: -100px;
 	margin-left: -125px;
 }
+
+#feed {
+	width: 100%;
+}
 </style>
 </head>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
+	var currentPage = 0;
 	function reloadFeed() {
 		$.ajax({
-			url : "/feed/0",
+			url : "/feed/" + currentPage,
 			dataType : "json",
 			headers : {
 				"Authorization" : readCookie("sessionId")
@@ -43,7 +48,7 @@
 		body.children().remove();
 
 		for (mess in messages) {
-			var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
+			var messHtml = "<tr style='colspan: 3;' class='messageRow' id='" + messages[mess]["_id"] + "'>";
 			messHtml += getAuthorMessageCell(messages[mess].author, messages[mess].authorId);
 			messHtml += "<td>" + messages[mess].text + "</td>";
 			if(messages[mess]["liked"]){
@@ -67,7 +72,7 @@
 			vote(messageId, 'unlike');
 		});
 		$(".silence").click(function(){
-			var authorUsername =  $(this).parents(".messageRow").children(".authorRow").children("div").attr('class');
+			var authorUsername = $(this).parents(".messageRow").children(".authorRow").children("div").attr('class');
 			silence(authorUsername);
 		});
 	}
@@ -126,16 +131,28 @@
 				  return false;
 			  }
 		});
+		$("#prev").click(function(){
+			if(currentPage > 0){
+				currentPage--;
+				reloadFeed();
+			}
+		});
+		$("#next").click(function(){
+			//if(currentPage > 0){
+				currentPage++;
+				reloadFeed();
+			//}
+		});
 		
 		reloadFeed();
 		setInterval(reloadFeed, 5000);
 	})
 </script>
 <body>
-	<table id="main">
+	<table id="main" style="border: 1px solid black;">
 		<tbody>
 			<tr>
-				<td>
+				<td style="colspan: 3">
 					<table id="feed">
 						<tbody>
 							<tr>
@@ -146,7 +163,12 @@
 				</td>
 			</tr>
 			<tr>
-				<td><input type="text" id="message"
+				<td style="position: relative; left: 40%;">
+					<a href="#" id="prev">&lt;&lt;</a>&nbsp;&nbsp;&nbsp;<a id="next" href="#">&gt;&gt;</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="colspan: 3;"><input type="text" id="message"
 					style="width: 100%; height: 20px;"
 					placeholder="Type here..." /></td>
 			</tr>

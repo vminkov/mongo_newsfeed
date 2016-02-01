@@ -2,7 +2,6 @@ package org.vminkov.feed.controller;
 
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.UpdateResults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -6,10 +6,10 @@
 <style type="text/css">
 #main {
 	height: 600px;
-	width: 450px;
+	width: 800px;
 	position: fixed;
 	top: 20%;
-	left: 45%;
+	left: 35%;
 	margin-top: -100px;
 	margin-left: -125px;
 }
@@ -17,12 +17,24 @@
 #feed {
 	width: 100%;
 }
+.date {
+	font-size: 10px;
+}
+.authorCell {
+	font-size: 14px;
+}
+.silence {
+	margin: 5px;
+}
 </style>
 </head>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="http://ejohn.org/files/pretty.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
 	var currentPage = 0;
+	var authorsCache = {};
+	
 	function reloadFeed() {
 		$.ajax({
 			url : "/feed/" + currentPage,
@@ -39,8 +51,40 @@
 		});
 	}
 
-	function getAuthorMessageCell(author, authorId){
-		return "<td class='authorRow'><div class='" + authorId + "'>" + author + "</div></td>"
+	function updateAuthorsData(messages){
+		var authorsIds = [];
+		for(eachMessage in messages){
+			authorsIds.push(messages[eachMessage].authorId);
+		}
+		
+		$.ajax({
+			url : "/user/data/batch",
+			method : "GET",
+			data: {ids:authorsIds},
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : function(data){
+				authorsCache = data;
+				
+				for(eachMessage in messages){
+					$('#' + messages[eachMessage]._id + ' td:first-child').html(getAuthorCell(messages[eachMessage].authorId));
+				}
+			},
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
+	}	
+	
+	function getAuthorCell(authorId){
+		var avatar = "";
+		if(authorsCache[authorId] && authorsCache[authorId].avatar/*  && authorsCache[authorId].avatar.length > 30 */){
+			avatar = "<img style='height: 30px; width: 30px;' src='data:image/jpeg;base64," + authorsCache[authorId].avatar + "'/>";
+		}
+
+		return "<div class='" + authorId + "'>" +  avatar + "<span style='margin-left: 8px;'>" + authorsCache[authorId].username + "</span>"
+		+ "<a class='silence' href='#'>silence</a></div>";
 	}
 	
 	function displayMessages(messages) {
@@ -48,15 +92,21 @@
 		body.children().remove();
 
 		for (mess in messages) {
+			if(!authorsCache[messages[mess].authorId]){
+				authorsCache[messages[mess].authorId] = {username: messages[mess].author, authorId: messages[mess].authorId};
+			}
+			
 			var messHtml = "<tr style='colspan: 3;' class='messageRow' id='" + messages[mess]["_id"] + "'>";
-			messHtml += getAuthorMessageCell(messages[mess].author, messages[mess].authorId);
+			messHtml += "<td class='authorCell' style='vertical-align: middle;'>" + getAuthorCell(messages[mess].authorId) + "</td>";
 			messHtml += "<td>" + messages[mess].text + "</td>";
 			if(messages[mess]["liked"]){
-				messHtml += "<td><a class='unlike' href='#'>D<a/></td>";
+				messHtml += "<td><a class='unlike' href='#'>D</a></td>";
 			}else{
-				messHtml += "<td><a class='like' href='#'>L<a/></td>";
+				messHtml += "<td><a class='like' href='#'>L</a></td>";
 			} 
-			messHtml += "<td><a class='silence' href='#'>silence<a/></td>";
+			
+			var dateInUTC = new Date(messages[mess].date + 2 * 3600 * 1000).toISOString();
+			messHtml += "<td><div class='date'>" + prettyDate(dateInUTC) + "</div></td>";
 			
 			messHtml += "</tr>";
 			
@@ -72,9 +122,11 @@
 			vote(messageId, 'unlike');
 		});
 		$(".silence").click(function(){
-			var authorUsername = $(this).parents(".messageRow").children(".authorRow").children("div").attr('class');
-			silence(authorUsername);
+			var authorId = $(this).parents(".messageRow").children("td.authorCell").children("div").attr('class');
+			silence(authorId);
 		});
+		
+		updateAuthorsData(messages);
 	}
 
 	function vote(messageId, vote){

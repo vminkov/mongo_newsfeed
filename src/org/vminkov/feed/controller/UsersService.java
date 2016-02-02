@@ -4,8 +4,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.bson.Document;
+import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
@@ -24,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.DBRef;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 @RestController
@@ -49,6 +55,39 @@ public class UsersService {
 		}
 
 		return new ResponseEntity<String>("{'status': 'succsess'}", HttpStatus.OK);
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/user/data/batch")
+	public ResponseEntity<Map<String, User>> getUsersDataBatch(@RequestHeader("Authorization") String sessionId, @RequestParam("ids[]") String[] ids){
+		Map<String, User> result = new HashMap<String, User>();
+
+		usersManager.validateSession(sessionId);
+		
+		Set<ObjectId> objIds = new HashSet<>();
+		for(String id : ids){
+			objIds.add(new ObjectId(id));
+		}
+
+		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
+		MongoCursor<Document> usersIterator = userCollection.find(new Document("_id", new Document("$in", objIds)), Document.class).limit(20).iterator();
+		Document current = null;
+		while((current = usersIterator.tryNext()) != null){
+			String avatarBase64; 
+			Object avatarBytes = current.get("avatar");
+			
+			if(avatarBytes instanceof String){
+				avatarBase64 = (String) avatarBytes;
+			}else if(avatarBytes instanceof Binary){
+				avatarBase64 = new String(((Binary) avatarBytes).getData());
+			}else {
+				avatarBase64 = avatarBytes.toString();
+			}
+			
+			result.put(current.getObjectId("_id").toString(), 
+					new User(null, current.getString("username"), null, avatarBase64, null));
+		}
+
+		return new ResponseEntity<Map<String, User>>(result, HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/user")

@@ -78,7 +78,7 @@ for(var i = 0; i < 500; i++){
 			DBRef("user", author._id),
 			//{$id: author._id, $ref: "user"},
 		text: "text message " + i,
-		date: new Date(),
+		date: new Date(new Date() - (Math.random() * 84600 * 1000 * 7)),
 		likes: someAuthorsIds()
 	})
 }
@@ -111,3 +111,17 @@ function removeSilencedWOMaya(){
 	db.user.update({username:'veliko'}, {$pull:{silenced: {$ne: "maya"}}})
 }
 
+function randomizeMessagesTimes(maxDaysBack){
+	//db.message.update({}, {$set: {date: new Date(new Date() - (Math.random() * 84600 * maxDaysBack))}}, {multi: true})
+	db.message.find({}).forEach(function(mydoc) {
+		  db.message.update({_id: mydoc._id}, {$set: {date: new Date(new Date() - (Math.random() * 84600 * 1000 * maxDaysBack))}})
+	})
+}
+
+
+function setSomeAvatars(){
+	var avatarFiles = ["veliko.jpg", "maya.jpg", "gosho.jpg", "tosho.jpg", "pesho.jpg"];
+	db.user.find({}).forEach(function(mydoc) {
+		  db.user.update({_id: mydoc._id}, {$set: {avatar: new Date(new Date() - (Math.random() * 84600 * 1000 * maxDaysBack))}})
+	})
+}

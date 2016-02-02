@@ -32,26 +32,12 @@
 		});
 	}
 
-	function getUrlParameter(sParam) {
-		var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL
-				.split('&'), sParameterName, i;
-
-		for (i = 0; i < sURLVariables.length; i++) {
-			sParameterName = sURLVariables[i].split('=');
-
-			if (sParameterName[0] === sParam) {
-				return sParameterName[1] === undefined ? true
-						: sParameterName[1];
-			}
-		}
-	};
-
 	$(document).ready(function() {
 		$.ajax({
 			url : "/user/profile",
 			dataType : "json",
 			data : {
-				id : getUrlParameter("userId")
+				id : readCookie("sessionId")
 			},
 			headers : {
 				"Authorization" : readCookie("sessionId")
@@ -68,10 +54,11 @@
 	function displayProfileData(data) {
 		$("#username").html("<div>" + data.username + "</div>");
 		$("#avatar")
-				.html("<div><img src='data:image/jpeg;base64," + data.avatar + "'/></div>");
+				.html(
+						"<div><img src='data:image/jpeg;base64," + data.avatar + "'/></div>");
 		$("#rating").html("<div>Rating: " + data.rating + "</div>");
 		$("#totalPosts")
-				.html("<div>Total posts: " + data.totalPosts + "</div>");
+		.html("<div>Total posts: " + data.totalPosts + "</div>");
 		
 		if(data.postsStats){
 			$("#totalPosts")
@@ -103,7 +90,7 @@
 		<tr>
 			<td id="totalPosts"></td>
 		</tr>
-				<tr>
+		<tr>
 			<td id="posts24_4"></td>
 			<td id="posts4_8"></td>
 		</tr>

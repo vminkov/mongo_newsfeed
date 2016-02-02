@@ -18,12 +18,12 @@ public class User {
 	private String username;
 	@JsonIgnore
 	private String password;
-	private String avatar;
+	private byte[] avatar;
 
 	@Reference
 	private List<User> silenced;
 	
-	public User(ObjectId _id, String username, String password, String avatar, List<User> silenced) {
+	public User(ObjectId _id, String username, String password, byte[] avatar, List<User> silenced) {
 		this._id = _id;
 		this.username = username;
 		this.password = password;
@@ -65,11 +65,11 @@ public class User {
 		this.silenced = silenced;
 	}
 
-	public String getAvatar() {
+	public byte[] getAvatar() {
 		return avatar;
 	}
 
-	public void setAvatar(String avatar) {
+	public void setAvatar(byte[] avatar) {
 		this.avatar = avatar;
 	}
 

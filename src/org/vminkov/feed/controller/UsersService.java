@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,14 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mongodb.BasicDBList;
 import com.mongodb.DBRef;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 @RestController
-public class UsersService {	@Autowired
+public class UsersService {
+	@Autowired
 	private MongoDatabase mongoDB;
 
 	@Autowired
@@ -47,7 +46,8 @@ public class UsersService {	@Autowired
 	private Datastore ds;
 
 	private static final byte[] DEFAULT_AVATAR = initDefaultAvatar();
-	static byte[] initDefaultAvatar(){
+
+	static byte[] initDefaultAvatar() {
 		try {
 			return Base64.getEncoder().encode(FileUtils.readFileToByteArray(new File("mongo/no_avatar.jpg")));
 		} catch (IOException e) {
@@ -113,24 +113,14 @@ public class UsersService {	@Autowired
 		User thisUser = usersManager.validateSession(sessionId);
 
 		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
-		DBRef userObjectId =  new DBRef("user", new ObjectId(id));
-		Document current = userCollection.find(new Document("_id", new ObjectId(id)), Document.class)
-				.first();
+		DBRef userDBRef = new DBRef("user", new ObjectId(id));
+		Document current = userCollection.find(new Document("_id", new ObjectId(id)), Document.class).first();
 
 		if (current != null) {
-			double rating = 0;
 			MongoCollection<Document> messagesCollection = this.mongoDB.getCollection("message");
+			double rating = getUserRating(userDBRef, userCollection, messagesCollection);
 
-			long silencedBy = userCollection.count(new Document("silenced", new Document("$elemMatch", userObjectId)));
-			long totalLikes = messagesCollection.count(new Document("likes", new Document("$elemMatch", userObjectId)));
-			long totalPosts = messagesCollection.count(new Document("author", userObjectId));
-			
-			if(silencedBy == 0){
-				rating = Double.MAX_VALUE;
-			} else {
-				rating = totalLikes / (silencedBy * silencedBy);
-			}
-			
+			long totalPosts = messagesCollection.count(new Document("author", userDBRef));
 			String avatarBase64;
 			Object avatarBytes = current.get("avatar");
 
@@ -143,22 +133,42 @@ public class UsersService {	@Autowired
 			}
 
 			result = new ProfileData(current.getString("username"), avatarBase64, totalPosts, rating);
-			
-			if(thisUser.get_id().equals(new ObjectId(id))){
-				BasicDBList dateFilter = new BasicDBList();
-				dateFilter.add(new Document("$where", "return this.date.getHour() >= 0 && this.date.getHour() < 4"));
-				dateFilter.add(new Document("_id", userObjectId));
-				long posts24_4 = messagesCollection.count(new Document("$and", dateFilter));
-				
-				long posts4_8 = messagesCollection.count(new Document("date", new Document("$where", userObjectId)));
-				long posts8_16 = messagesCollection.count(new Document("date", new Document("$where", userObjectId)));
-				long posts16_24 = messagesCollection.count(new Document("date", new Document("$where", userObjectId)));
-				
-				result.timeStats = null;
+
+			if (thisUser.get_id().equals(new ObjectId(id))) {
+				long posts24_4 = getPostsInHours(id, messagesCollection, 0, 4);
+
+				long posts4_8 = getPostsInHours(id, messagesCollection, 4, 8);
+				long posts8_16 = getPostsInHours(id, messagesCollection, 8, 16);
+				long posts16_24 = getPostsInHours(id, messagesCollection, 16, 0);
+
+				result.postsStats = new Float[] { new Float(posts24_4), new Float(posts4_8), new Float(posts8_16),
+						new Float(posts16_24) };
 			}
 		}
 
 		return new ResponseEntity<ProfileData>(result, HttpStatus.OK);
+	}
+
+	private double getUserRating(DBRef userDBRef, MongoCollection<Document> userCollection, 
+			MongoCollection<Document> messagesCollection) {
+		double rating = 0;
+
+		long silencedBy = userCollection.count(new Document("silenced", new Document("$elemMatch", userDBRef)));
+		long totalLikes = messagesCollection.count(new Document("likes", new Document("$elemMatch", userDBRef)));
+
+		if (silencedBy == 0) {
+			rating = Double.MAX_VALUE;
+		} else {
+			rating = (double) totalLikes / (silencedBy * silencedBy);
+		}
+		return rating;
+	}
+
+	private long getPostsInHours(String id, MongoCollection<Document> messagesCollection, int hourFrom,
+			int hourTo) {
+		return messagesCollection
+				.count(new Document("$where", "function(){return this.author.$id == \"" + id + "\" && this.date.getHours() >= "
+						+ hourFrom + (hourTo == 0 ? "" : " && this.date.getHours() < " + hourTo) + "}"));
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/user")
@@ -265,16 +275,16 @@ public class UsersService {	@Autowired
 		@JsonProperty
 		String rating;
 		@JsonProperty
-		Float[] timeStats;
+		Float[] postsStats;
 
 		public ProfileData(String username, String avatar, Long totalPosts, Double rating) {
 			this.username = username;
 			this.avatar = avatar;
 			this.totalPosts = totalPosts;
-			
-			if(rating != Double.MAX_VALUE){
+
+			if (rating != Double.MAX_VALUE) {
 				this.rating = rating.toString();
-			}else{
+			} else {
 				this.rating = "Highest";
 			}
 		}

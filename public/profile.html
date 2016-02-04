@@ -47,6 +47,12 @@
 	};
 
 	$(document).ready(function() {
+		var id = getUrlParameter("userId");
+		if(!!!id){
+			window.location = "/index.html";	
+			return;
+		}
+		
 		$.ajax({
 			url : "/user/profile",
 			dataType : "json",
@@ -74,13 +80,13 @@
 				.html("<div>Total posts: " + data.totalPosts + "</div>");
 		
 		if(data.postsStats){
-			$("#totalPosts")
+			$("#posts24_4")
 			.html("<div>Posts between 00:00 and 04:00 : " + data.postsStats[0] + "</div>");
-			$("#totalPosts")
+			$("#posts4_8")
 			.html("<div>Posts between 04:00 and 08:00 : " + data.postsStats[1] + "</div>");
-			$("#totalPosts")
+			$("#posts8_16")
 			.html("<div>Posts between 08:00 and 16:00 : " + data.postsStats[2] + "</div>");
-			$("#totalPosts")
+			$("#posts16_24")
 			.html("<div>Posts between 16:00 and 00:00 : " + data.postsStats[3] + "</div>");
 		}
 	}
@@ -89,28 +95,28 @@
 <body>
 	<div style='text-align: center;'>
 		<h2>Profile view</h2>
+		<table style='text-align: center; width: 100%;'>
+			<tr>
+				<td colspan="2" id="username"></td>
+			</tr>
+			<tr>
+				<td colspan="2" id="avatar"></td>
+			</tr>
+			<tr>
+				<td colspan="2" id="rating"></td>
+			</tr>
+			<tr>
+				<td colspan="2" id="totalPosts"></td>
+			</tr>
+					<tr>
+				<td id="posts24_4"></td>
+				<td id="posts4_8"></td>
+			</tr>
+			<tr>
+				<td id="posts8_16"></td>
+				<td id="posts16_24"></td>
+			</tr>
+		</table>
 	</div>
-	<table style='text-align: center; position: fixed; left: 45%;'>
-		<tr>
-			<td id="username"></td>
-		</tr>
-		<tr>
-			<td id="avatar"></td>
-		</tr>
-		<tr>
-			<td id="rating"></td>
-		</tr>
-		<tr>
-			<td id="totalPosts"></td>
-		</tr>
-				<tr>
-			<td id="posts24_4"></td>
-			<td id="posts4_8"></td>
-		</tr>
-		<tr>
-			<td id="posts8_16"></td>
-			<td id="posts16_24"></td>
-		</tr>
-	</table>
 </body>
 </html>

@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,8 +30,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBRef;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -154,7 +159,11 @@ public class UsersService {
 		double rating = 0;
 
 		long silencedBy = userCollection.count(new Document("silenced", new Document("$elemMatch", userDBRef)));
-		long totalLikes = messagesCollection.count(new Document("likes", new Document("$elemMatch", userDBRef)));
+
+		List<Document> rules = new ArrayList<>();
+		rules.add(new Document("author", new Document("$ne", userDBRef)));
+		rules.add(new Document("likes", new Document("$elemMatch", userDBRef)));
+		long totalLikes = messagesCollection.count(new Document("$and", rules));
 
 		if (silencedBy == 0) {
 			rating = Double.MAX_VALUE;
@@ -163,9 +172,72 @@ public class UsersService {
 		}
 		return rating;
 	}
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/user/profile/ratings")
+	public List<UserRatingsData> getAllRatings(/*@RequestHeader("Authorization") String sessionId*/){
+//		User thisUser = usersManager.validateSession(sessionId);
+		List<UserRatingsData> result = new ArrayList<>();
+		
+		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
+		MongoCollection<Document> messagesCollection = this.mongoDB.getCollection("message");
+		
+		Map<Object, Integer> usersSilencedByOthersTotal = new HashMap<>();
+		Map<Object, Integer> usersPostsLikedByOthersTotal = new HashMap<>();
+		
+		/* AGGREGATION PIPELINE */
+		
+		List<BasicDBObject> pipeline = new ArrayList<>();
+		pipeline.add(new BasicDBObject("$unwind", new BasicDBObject("path", "$silenced")));
+		BasicDBObject groupBy = new BasicDBObject("_id", "$silenced");
+		groupBy.append("count", new BasicDBObject("$sum", 1));
+		pipeline.add(new BasicDBObject("$group", groupBy));
+		
+		AggregateIterable<Document> aggregateIterable = userCollection.aggregate(pipeline);
+		MongoCursor<Document> eachUserIsSilenced = aggregateIterable.iterator();
+		while (eachUserIsSilenced.hasNext()) {
+			Document thisUserIsSilenced = eachUserIsSilenced.next();
+			Integer thisUserSilencedTimes = thisUserIsSilenced.getInteger("count");
+			DBRef userRef = (DBRef) thisUserIsSilenced.get("_id");
+			
+			usersSilencedByOthersTotal.put(userRef.getId(), thisUserSilencedTimes);
+		}
+		
+		/* MAP REDUCE */
+		
+		String mapLikes = "function(){emit(this.author, {likes: (this.likes ? this.likes.length : 0)});}";
+		String reduceLikes = "function(key, values){" + "sum = 0;" + "for(var i in values){" + "sum += values[i].likes;"
+				+ "}" + "return {userRef: key, likes: sum};" + "}";
+		MongoCursor iterator = messagesCollection.mapReduce(mapLikes, reduceLikes).iterator();
+		while (iterator.hasNext()) {
+			Document likesDoc = (Document) iterator.next();
+			Double likes = ((Document) likesDoc.get("value")).getDouble("likes");
+			DBRef userRef = (DBRef) likesDoc.get("_id");
+			usersPostsLikedByOthersTotal.put(userRef.getId(), (int) Math.round(likes));
+		}
+
+		for (Object userId : usersPostsLikedByOthersTotal.keySet()) {
+			double rating;
+			Integer likes = usersPostsLikedByOthersTotal.get(userId);
+			Integer silenced = IfNull.withDefault(usersSilencedByOthersTotal.get(userId), 0).get();
+			
+			if (likes != null && silenced != null) {
+				rating = (silenced < 1) ? Double.MAX_VALUE : ((double) likes) / (silenced * silenced);
+			} else {
+				rating = Double.MIN_VALUE;
+			}
+
+			result.add(new UserRatingsData(userId.toString(), userId.toString(), rating));
+		}
+		
+		Collections.sort(result);
+		
+		return result;
+	}
 
 	private long getPostsInHours(String id, MongoCollection<Document> messagesCollection, int hourFrom,
 			int hourTo) {
+		
+		// does not use indices because of $where
 		return messagesCollection
 				.count(new Document("$where", "function(){return this.author.$id == \"" + id + "\" && this.date.getHours() >= "
 						+ hourFrom + (hourTo == 0 ? "" : " && this.date.getHours() < " + hourTo) + "}"));
@@ -290,6 +362,40 @@ public class UsersService {
 		}
 
 		public ProfileData() {
+		}
+	}
+	static class UserRatingsData implements Comparable<UserRatingsData> {
+		@JsonProperty
+		String username;
+		@JsonProperty
+		String rating;
+		@JsonProperty
+		String id;
+		
+		@JsonIgnore
+		Double ratingNumber;
+
+		public UserRatingsData(String id, String username, Double rating) {
+			this.id = id;
+			this.username = username;
+
+			this.ratingNumber = rating;
+			
+			if (rating == Double.MAX_VALUE) {
+				this.rating = "Highest";
+			} else if (rating == Double.MIN_VALUE) {
+				this.rating = "N/A";
+			} else {
+				this.rating = rating.toString();
+			}
+		}
+
+		public UserRatingsData() {
+		}
+
+		@Override
+		public int compareTo(UserRatingsData o) {
+			return -this.ratingNumber.compareTo(o.ratingNumber);
 		}
 	}
 }

@@ -34,28 +34,42 @@
 
 	$(document).ready(function() {
 		$.ajax({
-			url : "/user/profile",
+			url : "/user/profile/ratings",
 			dataType : "json",
-			data : {
-				id : getUrlParameter("userId")
-			},
 			headers : {
 				"Authorization" : readCookie("sessionId")
 			},
 			success : function(data) {
-				displayProfileData(data);
+				displayRatingsData(data);
 			},
 			error : function(data) {
 				alert(JSON.parse(data.responseText)["message"]);
 			}
 		});
 	});
+	
+	function displayRatingsData(data){
+		var ratingsRows = "<tr><th>Username</th><th>Rating</th></tr>";
+		for(each in data){
+			userRating = data[each];
+			var username = "<td>" + userRating.username + "</td>";
+			var rating = "<td>" + userRating.rating + "</td>";
+			
+			
+			
+			ratingsRows += "<tr>" + username + rating + "</tr>"
+		}	
+
+		$("#ratings").html(
+				ratingsRows
+		);
+	}
 </script>
 </head>
 <body>
 	<div style='text-align: center;'>
 		<h2>Profile view</h2>
-		<table style='text-align: center; width: 100%;'>
+		<table id="ratings" style='text-align: center; width: 100%;'>
 			<tr>
 			</tr>
 		</table>

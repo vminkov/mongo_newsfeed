@@ -1,6 +1,7 @@
 package org.vminkov.feed.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -110,7 +111,7 @@ public class FeedService {
 			@RequestBody PostMessageData message) {
 		User user = usersManager.validateSession(sessionId);
 
-		this.ds.save(new Message(message.text, user, new Date(), null, null));
+		this.ds.save(new Message(message.text, user, new Date(), new ArrayList<>(), null));
 		return ResponseEntity.ok("{'success': true}");
 	}
 

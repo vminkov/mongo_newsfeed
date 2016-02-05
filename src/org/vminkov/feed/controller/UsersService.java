@@ -174,8 +174,9 @@ public class UsersService {
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/user/profile/ratings")
-	public List<UserRatingsData> getAllRatings(/*@RequestHeader("Authorization") String sessionId*/){
-//		User thisUser = usersManager.validateSession(sessionId);
+	public List<UserRatingsData> getAllRatings(@RequestHeader("Authorization") String sessionId){
+		usersManager.validateSession(sessionId);
+		
 		List<UserRatingsData> result = new ArrayList<>();
 		
 		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
@@ -185,7 +186,6 @@ public class UsersService {
 		Map<Object, Integer> usersPostsLikedByOthersTotal = new HashMap<>();
 		
 		/* AGGREGATION PIPELINE */
-		
 		List<BasicDBObject> pipeline = new ArrayList<>();
 		pipeline.add(new BasicDBObject("$unwind", new BasicDBObject("path", "$silenced")));
 		BasicDBObject groupBy = new BasicDBObject("_id", "$silenced");
@@ -203,7 +203,6 @@ public class UsersService {
 		}
 		
 		/* MAP REDUCE */
-		
 		String mapLikes = "function(){emit(this.author, {likes: (this.likes ? this.likes.length : 0)});}";
 		String reduceLikes = "function(key, values){" + "sum = 0;" + "for(var i in values){" + "sum += values[i].likes;"
 				+ "}" + "return {userRef: key, likes: sum};" + "}";
@@ -267,9 +266,10 @@ public class UsersService {
 		Query<User> find = this.ds.find(User.class, "username", data.username);
 		User user = find.get();
 
-		if (user == null) {
-			throw new RuntimeException("invalid username");
-		}
+		IfNull.throwRE(user, new RuntimeException("invalid username"));
+//		if (user == null) {
+//			throw new RuntimeException("invalid username");
+//		}
 
 		if (!user.getPassword().equals(data.password)) {
 			throw new RuntimeException("invalid password");

@@ -3,6 +3,12 @@ package org.vminkov.feed.controller;
 public class  IfNull<T> {
 	private T value;
 
+	public static void throwRE(Object value, RuntimeException re){
+		if(value == null){
+			throw re;
+		}
+	}
+	
 	public static <T> IfNull<T> withDefault(T value, T defaultValue){
 		return new IfNull<T>((value != null) ? value : defaultValue);
 	}

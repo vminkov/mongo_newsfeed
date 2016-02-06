@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Controller;
+import org.vminkov.feed.beans.User;
 
 @Controller
 public class UsersManager {

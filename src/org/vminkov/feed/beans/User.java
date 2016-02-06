@@ -1,4 +1,4 @@
-package org.vminkov.feed.controller;
+package org.vminkov.feed.beans;
 
 import java.util.List;
 

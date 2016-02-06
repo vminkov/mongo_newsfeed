@@ -5,6 +5,7 @@ import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.vminkov.feed.beans.Message;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;

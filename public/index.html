@@ -77,7 +77,7 @@
 		}
 		
 		$.ajax({
-			url : "/user/data/batch",
+			url : "/user/profile/batch",
 			method : "GET",
 			data: {ids:authorsIds},
 			headers : {
@@ -89,6 +89,20 @@
 				for(eachMessage in messages){
 					$('#' + messages[eachMessage]._id + ' td:first-child').html(getAuthorCell(messages[eachMessage].authorId));
 				}
+				
+				$(document).off('click', ".silenceButton");
+				$(document).on('click', ".silenceButton",function(e){
+		            e.preventDefault(); 
+					var authorId = $(this).parents(".messageRow").children("td.authorCell").children("div").attr('class');
+					silence(authorId);
+				});
+				$(".authorCell").hover(function(){
+						$(this).find(".glyphicon-remove-circle").show();
+					},
+					function(){
+						$(this).find(".glyphicon-remove-circle").hide();
+					}
+				);
 			},
 			error : function(data) {
 				alert(JSON.parse(data.responseText)["message"]);
@@ -145,19 +159,6 @@
 			var messageId = $(this).parents(".messageRow").attr('id');
 			vote(messageId, 'unlike');
 		});
-		$(document).off('click', ".silenceButton");
-		$(document).on('click', ".silenceButton",function(e){
-            e.preventDefault(); 
-			var authorId = $(this).parents(".messageRow").children("td.authorCell").children("div").attr('class');
-			silence(authorId);
-		});
-		$(".authorCell").hover(function(){
-				$(this).find(".glyphicon-remove-circle").show();
-			},
-			function(){
-				$(this).find(".glyphicon-remove-circle").hide();
-			}
-		);
 		
 		updateAuthorsData(messages);
 	}
@@ -192,7 +193,7 @@
 
 	function postMessage(messageText) {
 		$.ajax({
-			url : "/feed",
+			url : "/message",
 			method : "POST",
 			contentType: "application/json",
 			data : JSON.stringify({

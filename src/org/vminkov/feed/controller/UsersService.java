@@ -76,9 +76,9 @@ public class UsersService {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/user/data/batch")
-	public ResponseEntity<Map<String, User>> getUsersDataBatch(@RequestHeader("Authorization") String sessionId,
+	public ResponseEntity<Map<String, ProfileData>> getUsersDataBatch(@RequestHeader("Authorization") String sessionId,
 			@RequestParam("ids[]") String[] ids) {
-		Map<String, User> result = new HashMap<String, User>();
+		Map<String, ProfileData> result = new HashMap<String, ProfileData>();
 
 		usersManager.validateSession(sessionId);
 
@@ -89,25 +89,25 @@ public class UsersService {
 
 		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
 		MongoCursor<Document> usersIterator = userCollection
-				.find(new Document("_id", new Document("$in", objIds)), Document.class).limit(20).iterator();
+				.find(new Document("_id", new Document("$in", objIds)), Document.class).iterator();
 		Document current = null;
 		while ((current = usersIterator.tryNext()) != null) {
-			byte[] avatarBase64;
+			String avatarBase64;
 			Object avatarBytes = current.get("avatar");
 
 			if (avatarBytes instanceof String) {
-				avatarBase64 = ((String) avatarBytes).getBytes();
+				avatarBase64 = (String) avatarBytes;
 			} else if (avatarBytes instanceof Binary) {
-				avatarBase64 = ((Binary) avatarBytes).getData();
+				avatarBase64 = new String(((Binary) avatarBytes).getData());
 			} else {
-				avatarBase64 = avatarBytes.toString().getBytes();
+				avatarBase64 = avatarBytes.toString();
 			}
 
 			result.put(current.getObjectId("_id").toString(),
-					new User(null, current.getString("username"), null, avatarBase64, null));
+					new ProfileData(current.getString("username"), avatarBase64, null, null));
 		}
 
-		return new ResponseEntity<Map<String, User>>(result, HttpStatus.OK);
+		return new ResponseEntity<Map<String, ProfileData>>(result, HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/user/profile")
@@ -214,10 +214,12 @@ public class UsersService {
 			usersPostsLikedByOthersTotal.put(userRef.getId(), (int) Math.round(likes));
 		}
 
-		for (Object userId : usersPostsLikedByOthersTotal.keySet()) {
+		ArrayList<Document> allUsers = userCollection.find().into(new ArrayList<>());
+		
+		for (Document userDoc : allUsers) {
 			double rating;
-			Integer likes = usersPostsLikedByOthersTotal.get(userId);
-			Integer silenced = IfNull.withDefault(usersSilencedByOthersTotal.get(userId), 0).get();
+			Integer likes = usersPostsLikedByOthersTotal.get(userDoc.get("_id"));
+			Integer silenced = IfNull.withDefault(usersSilencedByOthersTotal.get(userDoc.get("_id")), 0).get();
 			
 			if (likes != null && silenced != null) {
 				rating = (silenced < 1) ? Double.MAX_VALUE : ((double) likes) / (silenced * silenced);
@@ -225,7 +227,7 @@ public class UsersService {
 				rating = Double.MIN_VALUE;
 			}
 
-			result.add(new UserRatingsData(userId.toString(), userId.toString(), rating));
+			result.add(new UserRatingsData(userDoc.get("_id").toString(), userDoc.get("username").toString(), rating));
 		}
 		
 		Collections.sort(result);
@@ -354,16 +356,25 @@ public class UsersService {
 			this.avatar = avatar;
 			this.totalPosts = totalPosts;
 
-			if (rating != Double.MAX_VALUE) {
-				this.rating = rating.toString();
-			} else {
-				this.rating = "Highest";
-			}
+			this.rating = ratingAsString(rating);
 		}
 
 		public ProfileData() {
 		}
 	}
+
+	private static String ratingAsString(Double rating) {
+		if (rating == null) {
+			return null;
+		} else if (rating == Double.MAX_VALUE) {
+			return "Highest";
+		} else if (rating == Double.MIN_VALUE) {
+			return "N/A";
+		} else {
+			return rating.toString();
+		}
+	}
+	
 	static class UserRatingsData implements Comparable<UserRatingsData> {
 		@JsonProperty
 		String username;
@@ -381,13 +392,7 @@ public class UsersService {
 
 			this.ratingNumber = rating;
 			
-			if (rating == Double.MAX_VALUE) {
-				this.rating = "Highest";
-			} else if (rating == Double.MIN_VALUE) {
-				this.rating = "N/A";
-			} else {
-				this.rating = rating.toString();
-			}
+			this.rating = ratingAsString(rating);
 		}
 
 		public UserRatingsData() {

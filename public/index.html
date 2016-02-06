@@ -3,32 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <title>Newsfeed</title>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
 <style type="text/css">
 #main {
+	border: 1px solid black;
 	height: 600px;
 	width: 800px;
-	position: fixed;
-	top: 20%;
+	position: relative;
 	left: 35%;
-	margin-top: -100px;
-	margin-left: -125px;
+	margin: 90px;
+	margin-left: -140px;
 }
 
 #feed {
 	width: 100%;
 }
+
 .date {
 	font-size: 10px;
 }
+
 .authorCell {
+	width: 140px;
 	font-size: 14px;
 }
-.silence {
+
+#message {
+	width: 790px;
+	height: 40px;
+	padding: 5px;
+	margin: 5px;
+}
+
+.avatar {
+	margin: 5px;
+}
+
+.silenceButton {
+	vertical-align: super;
 	margin: 5px;
 }
 </style>
 </head>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script src="http://ejohn.org/files/pretty.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
@@ -80,11 +99,14 @@
 	function getAuthorCell(authorId){
 		var avatar = "";
 		if(authorsCache[authorId] && authorsCache[authorId].avatar/*  && authorsCache[authorId].avatar.length > 30 */){
-			avatar = "<img style='height: 30px; width: 30px;' src='data:image/jpeg;base64," + authorsCache[authorId].avatar + "'/>";
+			avatar = "<img class='avatar' style='height: 30px; width: 30px;' src='data:image/jpeg;base64," + authorsCache[authorId].avatar + "'/>";
 		}
 
-		return "<div class='" + authorId + "'>" +  avatar + "<span style='margin-left: 8px;'>" + authorsCache[authorId].username + "</span>"
-		+ "<a class='silence' href='#'>silence</a></div>";
+		return "<div class='" + authorId + "'>"
+			+ avatar 
+			+ "<span style='margin-left: 8px;'><a href='/profile.html?userId=" + authorId + "'>" + authorsCache[authorId].username + "</a></span>"
+			+ "<a class='silenceButton' href='#'><span style='display: none;' class='glyphicon glyphicon-remove-circle'/></a>"
+			+ "</div>";
 	}
 	
 	function displayMessages(messages) {
@@ -96,13 +118,13 @@
 				authorsCache[messages[mess].authorId] = {username: messages[mess].author, authorId: messages[mess].authorId};
 			}
 			
-			var messHtml = "<tr style='colspan: 3;' class='messageRow' id='" + messages[mess]["_id"] + "'>";
+			var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
 			messHtml += "<td class='authorCell' style='vertical-align: middle;'>" + getAuthorCell(messages[mess].authorId) + "</td>";
 			messHtml += "<td>" + messages[mess].text + "</td>";
 			if(messages[mess]["liked"]){
-				messHtml += "<td><a class='unlike' href='#'>D</a></td>";
+				messHtml += "<td style='width: 30px;'><a class='unlike' href='#'>D</a></td>";
 			}else{
-				messHtml += "<td><a class='like' href='#'>L</a></td>";
+				messHtml += "<td style='width: 30px;'><a class='like' href='#'>L</a></td>";
 			} 
 			
 			var dateInUTC = new Date(messages[mess].date + 2 * 3600 * 1000).toISOString();
@@ -113,18 +135,29 @@
 			body.append(messHtml);
 		}
 		
-		$(".like").click(function(){
+		$(".like").click(function(e){
+            e.preventDefault(); 
 			var messageId = $(this).parents(".messageRow").attr('id');
 			vote(messageId, 'like');
 		});
-		$(".unlike").click(function(){
+		$(".unlike").click(function(e){
+            e.preventDefault(); 
 			var messageId = $(this).parents(".messageRow").attr('id');
 			vote(messageId, 'unlike');
 		});
-		$(".silence").click(function(){
+		$(document).off('click', ".silenceButton");
+		$(document).on('click', ".silenceButton",function(e){
+            e.preventDefault(); 
 			var authorId = $(this).parents(".messageRow").children("td.authorCell").children("div").attr('class');
 			silence(authorId);
 		});
+		$(".authorCell").hover(function(){
+				$(this).find(".glyphicon-remove-circle").show();
+			},
+			function(){
+				$(this).find(".glyphicon-remove-circle").hide();
+			}
+		);
 		
 		updateAuthorsData(messages);
 	}
@@ -176,6 +209,8 @@
 	}
 	
 	$(document).ready(function(){
+		authenticate();
+		
 		$("#message").keypress(function (e) {
 			  if (e.which == 13) {
 				  postMessage(this.value);
@@ -183,13 +218,13 @@
 				  return false;
 			  }
 		});
-		$("#prev").click(function(){
+		$("#previousPage").click(function(){
 			if(currentPage > 0){
 				currentPage--;
 				reloadFeed();
 			}
 		});
-		$("#next").click(function(){
+		$("#nextPage").click(function(){
 			//if(currentPage > 0){
 				currentPage++;
 				reloadFeed();
@@ -201,7 +236,7 @@
 	})
 </script>
 <body>
-	<table id="main" style="border: 1px solid black;">
+	<table id="main">
 		<tbody>
 			<tr>
 				<td style="colspan: 3">
@@ -215,13 +250,12 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="position: relative; left: 40%;">
-					<a href="#" id="prev">&lt;&lt;</a>&nbsp;&nbsp;&nbsp;<a id="next" href="#">&gt;&gt;</a>
+				<td style="text-align: center;">
+					<a href="#" id="previousPage">&lt;&lt;</a>&nbsp;&nbsp;&nbsp;<a href="#" id="nextPage">&gt;&gt;</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="colspan: 3;"><input type="text" id="message"
-					style="width: 100%; height: 20px;"
+				<td style='width: 100%;' id='postBox' colspan="3"><input type="text" id="message"
 					placeholder="Type here..." /></td>
 			</tr>
 		</tbody>

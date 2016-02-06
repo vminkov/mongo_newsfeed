@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Mongo Newsfeed - Profile</title>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
 <style>
 #noelem {
 	height: 200px;
@@ -17,20 +21,6 @@
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
-	var sessionId = readCookie("sessionId");
-	if (!sessionId) {
-		window.location = "/login.html";
-	} else {
-		$.ajax({
-			headers : {
-				"Authorization" : sessionId
-			},
-			url : "/session",
-			error : function() {
-				window.location = "/login.html";
-			}
-		});
-	}
 
 	function getUrlParameter(sParam) {
 		var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL
@@ -52,6 +42,7 @@
 			window.location = "/index.html";	
 			return;
 		}
+		authenticate();
 		
 		$.ajax({
 			url : "/user/profile",
@@ -88,6 +79,8 @@
 			.html("<div>Posts between 08:00 and 16:00 : " + data.postsStats[2] + "</div>");
 			$("#posts16_24")
 			.html("<div>Posts between 16:00 and 00:00 : " + data.postsStats[3] + "</div>");
+			
+			$("body").append("<p style='text-align: center;'><a href='/avatar.html'>Change your avatar</a></p>");
 		}
 	}
 </script>

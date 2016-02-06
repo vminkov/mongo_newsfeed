@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Mongo Newsfeed - Change avatar</title>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
 <style>
-div {
+#uploadSection {
 	height: 200px;
 	width: 250px;
 	position: fixed;
@@ -15,28 +18,19 @@ div {
 }
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
+	authenticate();
+	
 	var sessionId = readCookie("sessionId");
-	if(!sessionId) {
-		window.location = "/login.html";
-	}else{
-		$.ajax({
-			headers: {"Authorization": sessionId},
-			url: "/session",
-			error: function(){
-				window.location = "/login.html";
-			}
-		});
-		
-		$(document).ready(function(){
-			$("#uploadForm").attr('action' , $("#uploadForm").attr('action') + "?sessionId=" + sessionId);
-		});
-	}	
+	$(document).ready(function(){
+		$("#uploadForm").attr('action' , $("#uploadForm").attr('action') + "?sessionId=" + sessionId);
+	});
 </script>
 </head>
 <body>
-	<div style='text-align: center;'>
+	<div style='text-align: center;' id='uploadSection'>
 		<h2>Select image</h2>
 		<table>
 			<tr>

@@ -65,7 +65,7 @@
 	function displayProfileData(data) {
 		$("#username").html("<div>" + data.username + "</div>");
 		$("#avatar")
-				.html("<div><img src='data:image/jpeg;base64," + data.avatar + "'/></div>");
+				.html("<div><img width=250 src='data:image/jpeg;base64," + data.avatar + "'/></div>");
 		$("#totalPosts")
 				.html("<div>Total posts: " + data.totalPosts + "</div>");
 		

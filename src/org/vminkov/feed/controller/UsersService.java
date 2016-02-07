@@ -1,4 +1,4 @@
-package org.vminkov.feed.services;
+package org.vminkov.feed.controller;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.vminkov.feed.beans.User;
-import org.vminkov.feed.controller.IfNull;
-import org.vminkov.feed.controller.UsersManager;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.DBRef;
@@ -72,9 +70,9 @@ public class UsersService {
 		if (!toberegistered.username.matches("^[a-z0-9_-]{3,15}$")) {
 			throw new RuntimeException("invalid username");
 		}
-		if (!toberegistered.password.matches("^[a-z0-9_-]{6,15}$")) {
+		/*if (!toberegistered.password.matches("^[a-z0-9_-]{6,15}$")) {
 			throw new RuntimeException("invalid password");
-		}
+		}*/
 
 		if (ds.find(User.class).filter("username =", toberegistered.username).get() != null) {
 			throw new RuntimeException("username already taken");

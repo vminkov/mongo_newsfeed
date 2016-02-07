@@ -1,4 +1,4 @@
-package org.vminkov.feed.services;
+package org.vminkov.feed.controller;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.HtmlUtils;
 import org.vminkov.feed.beans.Message;
 import org.vminkov.feed.beans.User;
-import org.vminkov.feed.controller.UsersManager;
-import org.vminkov.feed.services.FeedService.PostMessageData;
+import org.vminkov.feed.controller.FeedService.PostMessageData;
 
 @RestController
 public class MessageService {
@@ -31,7 +31,7 @@ public class MessageService {
 			@RequestBody PostMessageData message) {
 		User user = usersManager.validateSession(sessionId);
 
-		this.ds.save(new Message(message.text, user, new Date(), new ArrayList<>(), null));
+		this.ds.save(new Message(HtmlUtils.htmlEscape(message.text), user, new Date(), new ArrayList<>(), null));
 		return ResponseEntity.ok("{'success': true}");
 	}
 	

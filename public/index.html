@@ -6,6 +6,10 @@
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
 <style type="text/css">
+table {
+	border-collapse: separate;
+}
+
 #main {
 	border: 1px solid black;
 	height: 600px;
@@ -22,6 +26,7 @@
 
 .date {
 	font-size: 10px;
+	margin: 5px;
 }
 
 .authorCell {
@@ -65,12 +70,18 @@
 				displayMessages(data);
 			},
 			error : function() {
-				window.location = "/login.html";
+				alert(JSON.parse(data.responseText)["message"]);
 			}
 		});
 	}
 
 	function updateAuthorsData(messages){
+		if(!messages || !messages.length){
+			currentPage--;
+			reloadFeed();
+			return;
+		}
+		
 		var authorsIds = [];
 		for(eachMessage in messages){
 			authorsIds.push(messages[eachMessage].authorId);
@@ -136,13 +147,13 @@
 			messHtml += "<td class='authorCell' style='vertical-align: middle;'>" + getAuthorCell(messages[mess].authorId) + "</td>";
 			messHtml += "<td>" + messages[mess].text + "</td>";
 			if(messages[mess]["liked"]){
-				messHtml += "<td style='width: 30px;'><a class='unlike' href='#'>D</a></td>";
+				messHtml += "<td style='width: 30px;'><a class='unlike' href='#'><span class='glyphicon glyphicon-thumbs-down'/></a></td>";
 			}else{
-				messHtml += "<td style='width: 30px;'><a class='like' href='#'>L</a></td>";
+				messHtml += "<td style='width: 30px;'><a class='like' href='#'><span class='glyphicon glyphicon-thumbs-up'/></a></td>";
 			} 
 			
 			var dateInUTC = new Date(messages[mess].date + 2 * 3600 * 1000).toISOString();
-			messHtml += "<td><div class='date'>" + prettyDate(dateInUTC) + "</div></td>";
+			messHtml += "<td style='width: 80px;'><div class='date'>" + prettyDate(dateInUTC) + "</div></td>";
 			
 			messHtml += "</tr>";
 			
@@ -233,7 +244,7 @@
 		});
 		
 		reloadFeed();
-		setInterval(reloadFeed, 5000);
+		//setInterval(reloadFeed, 5000);
 	})
 </script>
 <body>

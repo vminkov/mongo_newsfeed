@@ -1,4 +1,4 @@
-package org.vminkov.feed.services;
+package org.vminkov.feed.controller;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.vminkov.feed.beans.Message;
 import org.vminkov.feed.beans.User;
-import org.vminkov.feed.controller.UsersManager;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.client.MongoCollection;

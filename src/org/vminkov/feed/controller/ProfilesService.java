@@ -1,4 +1,4 @@
-package org.vminkov.feed.services;
+package org.vminkov.feed.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.vminkov.feed.beans.User;
-import org.vminkov.feed.controller.IfNull;
-import org.vminkov.feed.controller.UsersManager;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

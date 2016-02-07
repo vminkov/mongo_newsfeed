@@ -17,12 +17,15 @@ div {
 
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script src="/common.js"></script>
 <script type="text/javascript">
 function onLogInClick(){
 	var username, password;
-	username = $('#username').val();
-	password = $('#password').val();
+	username = $('#inputEmail').val();
+	password = $('#inputPassword').val();
 	
 	$.ajax({
 		url: "/session",
@@ -33,30 +36,42 @@ function onLogInClick(){
 		success: function(data){
 			createCookie("sessionId", data.sessionId, 14);
 			window.location = "/index.html";
+		},
+		error: function(data){
+			alert(JSON.parse(data.responseText)["message"]);
 		}
 	});
 }
+$(document).ready(function(){
+	$("#inputPassword").keypress(function (e) {
+		  if (e.which == 13) {
+			  onLogInClick();
+			  return false;
+		  }
+	});
+	$("#inputEmail").keypress(function (e) {
+		  if (e.which == 13) {
+			  onLogInClick();
+			  return false;
+		  }
+	});
+});
 </script>
 </head>
 <body>
-	<div style='text-align: center;'>
-		<h2>Log In</h2>
-		<table>
-			<tr>
-				<td>Username:</td>
-				<td><input type="text" id="username"/></td>
-			</tr>
-			<tr>
-				<td>Password:</td>
-				<td><input type="password" id="password"/></td>
-			</tr>
-			<tr>
-				<td colspan="2"><button type="submit" onclick="onLogInClick()">Log In</button></td>
-			</tr>
-			<tr>
-				<td colspan="2"><a style='font-size: 10px;' href='/register.html'>Register</a></td>
-			</tr>
-		</table>
+	<div class="container">
+		<div class="form-signin">
+			<h2 class="form-signin-heading">Log In</h2>
+			<label for="inputEmail" class="sr-only">Username</label> <input
+				type="text" id="inputEmail" class="form-control"
+				placeholder="username" required autofocus> <label
+				for="inputPassword" class="sr-only">Password</label> <input
+				type="password" id="inputPassword" class="form-control"
+				placeholder="Password" required>
+			<button onclick="onLogInClick()"
+				class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
+		<a style='float: right;' href='/register.html'>Not registered yet?</a>
+		</div>
 	</div>
 </body>
 </html>

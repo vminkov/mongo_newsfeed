@@ -5,7 +5,7 @@
 <title>Mongo Newsfeed - Profile</title>
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="/feed.css">
 
 <style>
 #noelem {
@@ -17,10 +17,38 @@
 	margin-top: -100px;
 	margin-left: -125px;
 }
+
+#feed {
+	border: 1px solid black;
+}
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="http://ejohn.org/files/pretty.js"></script>
 <script src="/common.js"></script>
+<script src="/feed.js"></script>
 <script type="text/javascript">
+	var currentUserName = "";
+	
+	function reloadFeed() {
+		$.ajax({
+			url : "/mentions/" + currentUserName,
+			dataType : "json",
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : function(data) {
+				if(!data || !data.length){
+					return;
+				}
+				
+				displayMessages(data);
+			},
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
+	}
 
 	function getUrlParameter(sParam) {
 		var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL
@@ -39,16 +67,20 @@
 	$(document).ready(function() {
 		var id = getUrlParameter("userId");
 		if(!!!id){
-			window.location = "/index.html";	
-			return;
+			id = getUrlParameter("user");
+			if(!!!id){
+				window.location = "/index.html";	
+				return;
+			}
 		}
+			
 		authenticate();
 		
 		$.ajax({
 			url : "/user/profile",
 			dataType : "json",
 			data : {
-				id : getUrlParameter("userId")
+				id : id
 			},
 			headers : {
 				"Authorization" : readCookie("sessionId")
@@ -79,15 +111,18 @@
 			$("#posts16_24")
 			.html("<div>Posts between 16:00 and 00:00 : " + data.postsStats[3] + "</div>");
 			
-			$("body").append("<p style='text-align: center;'><a href='/avatar.html'>Change your avatar</a></p>");
+			$("#statsTable").after("<p style='text-align: center;'><a href='/avatar.html'>Change your avatar</a></p>");
 		}
+		
+		currentUserName = data.username;
+		reloadFeed();
 	}
 </script>
 </head>
 <body>
 	<div style='text-align: center;'>
 		<h2>Profile view</h2>
-		<table style='text-align: center; width: 100%;'>
+		<table style='text-align: center; width: 100%;' id='statsTable'>
 			<tr>
 				<td colspan="2" id="username"></td>
 			</tr>
@@ -108,6 +143,13 @@
 				<td id="posts8_16"></td>
 				<td id="posts16_24"></td>
 			</tr>
+		</table>
+		<table id="feed">
+			<tbody>
+				<tr>
+					<td>no mentions</td>
+				</tr>
+			</tbody>
 		</table>
 	</div>
 </body>

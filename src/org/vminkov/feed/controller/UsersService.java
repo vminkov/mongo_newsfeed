@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Base64;
 
+import javax.xml.ws.WebServiceException;
+
 import org.apache.commons.io.FileUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -68,18 +70,18 @@ public class UsersService {
 	@RequestMapping(method = RequestMethod.POST, value = "/user")
 	public SessionData register(@RequestBody LogInData toberegistered) {
 		if (!toberegistered.username.matches("^[a-z0-9_-]{3,15}$")) {
-			throw new RuntimeException("invalid username");
+			throw new WebServiceException("invalid username");
 		}
 		/*if (!toberegistered.password.matches("^[a-z0-9_-]{6,15}$")) {
-			throw new RuntimeException("invalid password");
+			throw new WebServiceException("invalid password");
 		}*/
 
 		if (ds.find(User.class).filter("username =", toberegistered.username).get() != null) {
-			throw new RuntimeException("username already taken");
+			throw new WebServiceException("username already taken");
 		}
 
 		User user = new User(null, toberegistered.username, toberegistered.password, DEFAULT_AVATAR, new ArrayList<>());
-		ds.save(user);
+		this.ds.save(user);
 
 		return new SessionData(this.usersManager.addSession(user));
 	}
@@ -89,11 +91,8 @@ public class UsersService {
 		Query<User> find = this.ds.find(User.class, "username", data.username);
 		User user = find.get();
 
-		IfNull.throwRE(user, new RuntimeException("invalid username"));
-
-		if (!user.getPassword().equals(data.password)) {
-			throw new RuntimeException("invalid password");
-		}
+		IfNull.throwRE(user, new WebServiceException("invalid username"));
+		IfNull.assertTrue(user.getPassword().equals(data.password), new WebServiceException("invalid password"));
 
 		return new SessionData(this.usersManager.addSession(user));
 	}
@@ -112,7 +111,7 @@ public class UsersService {
 	@RequestMapping(method = RequestMethod.POST, value = "/upload")
 	public ResponseEntity uploadAvatar(@RequestParam("sessionId") String sessionId,
 			@RequestParam("file") MultipartFile file) throws IOException, URISyntaxException {
-		User user = usersManager.validateSession(sessionId);
+		User user = this.usersManager.validateSession(sessionId);
 
 		if (!file.isEmpty()) {
 			try {

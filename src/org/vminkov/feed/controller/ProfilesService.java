@@ -44,7 +44,7 @@ public class ProfilesService {
 			@RequestParam("ids[]") String[] ids) {
 		Map<String, ProfileData> result = new HashMap<String, ProfileData>();
 
-		usersManager.validateSession(sessionId);
+		this.usersManager.validateSession(sessionId);
 
 		Set<ObjectId> objIds = new HashSet<>();
 		for (String id : ids) {
@@ -79,12 +79,21 @@ public class ProfilesService {
 			@RequestParam("id") String id) {
 		ProfileData result = null;
 
-		User thisUser = usersManager.validateSession(sessionId);
+		User thisUser = this.usersManager.validateSession(sessionId);
 
+		Document identifier;
+		if(id.length() > 20){
+			identifier = new Document("_id", new ObjectId(id));
+		}
+		else{
+			identifier = new Document("username", id);
+		}
+		
 		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
-		DBRef userDBRef = new DBRef("user", new ObjectId(id));
-		Document current = userCollection.find(new Document("_id", new ObjectId(id)), Document.class).first();
-
+		Document current = userCollection.find(identifier, Document.class).first();
+		DBRef userDBRef = new DBRef("user", current.get("_id"));
+		id = ((ObjectId) current.get("_id")).toString();
+		
 		if (current != null) {
 			MongoCollection<Document> messagesCollection = this.mongoDB.getCollection("message");
 
@@ -119,7 +128,7 @@ public class ProfilesService {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/user/profile/ratings")
 	public List<UserRatingsData> getAllRatings(@RequestHeader("Authorization") String sessionId){
-		usersManager.validateSession(sessionId);
+		this.usersManager.validateSession(sessionId);
 		
 		List<UserRatingsData> result = new ArrayList<>();
 		

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.xml.ws.WebServiceException;
+
 import org.springframework.stereotype.Controller;
 import org.vminkov.feed.beans.User;
 
@@ -20,7 +22,7 @@ public class UsersManager {
 	public User validateSession(String sessionId){
 		User user = this.sessions.get(sessionId);
 		if(user == null){
-			throw new RuntimeException("invalid session");
+			throw new WebServiceException("invalid session");
 		}
 		
 		return user;

@@ -9,6 +9,12 @@ public class  IfNull<T> {
 		}
 	}
 	
+	public static void assertTrue(boolean cond, RuntimeException re){
+		if(!cond){
+			throw re;
+		}
+	}
+	
 	public static <T> IfNull<T> withDefault(T value, T defaultValue){
 		return new IfNull<T>((value != null) ? value : defaultValue);
 	}

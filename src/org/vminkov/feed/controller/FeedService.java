@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.ws.WebServiceException;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
@@ -46,6 +48,41 @@ public class FeedService {
 						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
 				.order("-date").offset(PAGE_SIZE * pageNum)
 				.limit(PAGE_SIZE);
+		List<Message> messages = messagesQuery.asList();
+
+		return convertMessages(user, messages);
+	}
+
+	@RequestMapping("/mentions/{username}")
+	public List<FeedMessage> getMentions(@RequestHeader("Authorization") String sessionId,
+			@PathVariable("username") String username) {
+		User user = usersManager.validateSession(sessionId);
+
+		Query<Message> messagesQuery = this.ds.find(Message.class)
+				.filter("author nin", 
+						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
+				.order("-date").search("@" + username);
+		List<Message> messages = messagesQuery.asList();
+
+		return convertMessages(user, messages);
+	}
+
+	@RequestMapping("/tag/{hashtag}")
+	public List<FeedMessage> getTagFeed(@RequestHeader("Authorization") String sessionId,
+			@PathVariable("hashtag") String hashtag) {
+		User user = usersManager.validateSession(sessionId);
+		
+		if(hashtag == null){
+			throw new WebServiceException("missing tag");
+		}
+		else{
+			hashtag = hashtag.trim();
+		}
+
+		Query<Message> messagesQuery = this.ds.find(Message.class)
+				.filter("author nin", 
+						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
+				.order("-date").search("#" + hashtag);
 		List<Message> messages = messagesQuery.asList();
 
 		return convertMessages(user, messages);

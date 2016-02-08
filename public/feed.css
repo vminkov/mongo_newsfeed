@@ -1,0 +1,43 @@
+table {
+	border-collapse: separate;
+}
+
+#main {
+	border: 1px solid black;
+	height: 600px;
+	width: 800px;
+	position: relative;
+	left: 35%;
+	margin: 90px;
+	margin-left: -140px;
+}
+
+#feed {
+	width: 100%;
+}
+
+.date {
+	font-size: 10px;
+	margin: 5px;
+}
+
+.authorCell {
+	width: 140px;
+	font-size: 14px;
+}
+
+#message {
+	width: 790px;
+	height: 40px;
+	padding: 5px;
+	margin: 5px;
+}
+
+.avatar {
+	margin: 5px;
+}
+
+.silenceButton {
+	vertical-align: super;
+	margin: 5px;
+}

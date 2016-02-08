@@ -5,247 +5,35 @@
 <title>Newsfeed</title>
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
-<style type="text/css">
-table {
-	border-collapse: separate;
-}
-
-#main {
-	border: 1px solid black;
-	height: 600px;
-	width: 800px;
-	position: relative;
-	left: 35%;
-	margin: 90px;
-	margin-left: -140px;
-}
-
-#feed {
-	width: 100%;
-}
-
-.date {
-	font-size: 10px;
-	margin: 5px;
-}
-
-.authorCell {
-	width: 140px;
-	font-size: 14px;
-}
-
-#message {
-	width: 790px;
-	height: 40px;
-	padding: 5px;
-	margin: 5px;
-}
-
-.avatar {
-	margin: 5px;
-}
-
-.silenceButton {
-	vertical-align: super;
-	margin: 5px;
-}
-</style>
+<link rel="stylesheet" href="/feed.css">
 </head>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script src="http://ejohn.org/files/pretty.js"></script>
 <script src="/common.js"></script>
+<script src="/feed.js"></script>
 <script type="text/javascript">
-	var currentPage = 0;
-	var authorsCache = {};
-	
-	function reloadFeed() {
-		$.ajax({
-			url : "/feed/" + currentPage,
-			dataType : "json",
-			headers : {
-				"Authorization" : readCookie("sessionId")
-			},
-			success : function(data) {
-				displayMessages(data);
-			},
-			error : function() {
-				alert(JSON.parse(data.responseText)["message"]);
-			}
-		});
-	}
-
-	function updateAuthorsData(messages){
-		if(!messages || !messages.length){
-			currentPage--;
-			reloadFeed();
-			return;
+function reloadFeed() {
+	$.ajax({
+		url : "/feed/" + currentPage,
+		dataType : "json",
+		headers : {
+			"Authorization" : readCookie("sessionId")
+		},
+		success : function(data) {
+			displayMessages(data);
+		},
+		error : function(data) {
+			alert(JSON.parse(data.responseText)["message"]);
 		}
-		
-		var authorsIds = [];
-		for(eachMessage in messages){
-			authorsIds.push(messages[eachMessage].authorId);
-		}
-		
-		$.ajax({
-			url : "/user/profile/batch",
-			method : "GET",
-			data: {ids:authorsIds},
-			headers : {
-				"Authorization" : readCookie("sessionId")
-			},
-			success : function(data){
-				authorsCache = data;
-				
-				for(eachMessage in messages){
-					$('#' + messages[eachMessage]._id + ' td:first-child').html(getAuthorCell(messages[eachMessage].authorId));
-				}
-				
-				$(document).off('click', ".silenceButton");
-				$(document).on('click', ".silenceButton",function(e){
-		            e.preventDefault(); 
-					var authorId = $(this).parents(".messageRow").children("td.authorCell").children("div").attr('class');
-					silence(authorId);
-				});
-				$(".authorCell").hover(function(){
-						$(this).find(".glyphicon-remove-circle").show();
-					},
-					function(){
-						$(this).find(".glyphicon-remove-circle").hide();
-					}
-				);
-			},
-			error : function(data) {
-				alert(JSON.parse(data.responseText)["message"]);
-			}
-		});
-	}	
-	
-	function getAuthorCell(authorId){
-		var avatar = "";
-		if(authorsCache[authorId] && authorsCache[authorId].avatar/*  && authorsCache[authorId].avatar.length > 30 */){
-			avatar = "<img class='avatar' style='height: 30px; width: 30px;' src='data:image/jpeg;base64," + authorsCache[authorId].avatar + "'/>";
-		}
+	});
+}
 
-		return "<div class='" + authorId + "'>"
-			+ avatar 
-			+ "<span style='margin-left: 8px;'><a href='/profile.html?userId=" + authorId + "'>" + authorsCache[authorId].username + "</a></span>"
-			+ "<a class='silenceButton' href='#'><span style='display: none;' class='glyphicon glyphicon-remove-circle'/></a>"
-			+ "</div>";
-	}
-	
-	function displayMessages(messages) {
-		var body = $('#feed > tbody');
-		body.children().remove();
-
-		for (mess in messages) {
-			if(!authorsCache[messages[mess].authorId]){
-				authorsCache[messages[mess].authorId] = {username: messages[mess].author, authorId: messages[mess].authorId};
-			}
-			
-			var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
-			messHtml += "<td class='authorCell' style='vertical-align: middle;'>" + getAuthorCell(messages[mess].authorId) + "</td>";
-			messHtml += "<td>" + messages[mess].text + "</td>";
-			if(messages[mess]["liked"]){
-				messHtml += "<td style='width: 30px;'><a class='unlike' href='#'><span class='glyphicon glyphicon-thumbs-down'/></a></td>";
-			}else{
-				messHtml += "<td style='width: 30px;'><a class='like' href='#'><span class='glyphicon glyphicon-thumbs-up'/></a></td>";
-			} 
-			
-			var dateInUTC = new Date(messages[mess].date + 2 * 3600 * 1000).toISOString();
-			messHtml += "<td style='width: 80px;'><div class='date'>" + prettyDate(dateInUTC) + "</div></td>";
-			
-			messHtml += "</tr>";
-			
-			body.append(messHtml);
-		}
-		
-		$(".like").click(function(e){
-            e.preventDefault(); 
-			var messageId = $(this).parents(".messageRow").attr('id');
-			vote(messageId, 'like');
-		});
-		$(".unlike").click(function(e){
-            e.preventDefault(); 
-			var messageId = $(this).parents(".messageRow").attr('id');
-			vote(messageId, 'unlike');
-		});
-		
-		updateAuthorsData(messages);
-	}
-
-	function vote(messageId, vote){
-		$.ajax({
-			url : "/message/" + messageId + "/" + vote,
-			method : "POST",
-			headers : {
-				"Authorization" : readCookie("sessionId")
-			},
-			success : reloadFeed,
-			error : function(data) {
-				alert(JSON.parse(data.responseText)["message"]);
-			}
-		});
-	}
-	
-	function silence(userId){
-		$.ajax({
-			url : "/user/" + userId + "/silence",
-			method : "POST",
-			headers : {
-				"Authorization" : readCookie("sessionId")
-			},
-			success : reloadFeed,
-			error : function(data) {
-				alert(JSON.parse(data.responseText)["message"]);
-			}
-		});
-	}
-
-	function postMessage(messageText) {
-		$.ajax({
-			url : "/message",
-			method : "POST",
-			contentType: "application/json",
-			data : JSON.stringify({
-				text : messageText
-			}),
-			headers : {
-				"Authorization" : readCookie("sessionId")
-			},
-			success : reloadFeed,
-			error : function(data) {
-				alert(JSON.parse(data.responseText)["message"]);
-			}
-		});
-	}
-	
 	$(document).ready(function(){
 		authenticate();
-		
-		$("#message").keypress(function (e) {
-			  if (e.which == 13) {
-				  postMessage(this.value);
-				  this.value = "";
-				  return false;
-			  }
-		});
-		$("#previousPage").click(function(){
-			if(currentPage > 0){
-				currentPage--;
-				reloadFeed();
-			}
-		});
-		$("#nextPage").click(function(){
-			//if(currentPage > 0){
-				currentPage++;
-				reloadFeed();
-			//}
-		});
-		
 		reloadFeed();
-		//setInterval(reloadFeed, 5000);
-	})
+		setInterval(reloadFeed, 5000);
+	});
 </script>
 <body>
 	<table id="main">

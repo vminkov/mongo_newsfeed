@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mongo Newsfeed - Hashtag</title>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/feed.css">
+
+<style>
+#noelem {
+	height: 200px;
+	width: 250px;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	margin-top: -100px;
+	margin-left: -125px;
+}
+
+#feed {
+	border: 1px solid black;
+}
+</style>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="http://ejohn.org/files/pretty.js"></script>
+<script src="/common.js"></script>
+<script src="/feed.js"></script>
+<script type="text/javascript">
+	var hashtag = "";
+	
+	function reloadFeed() {
+		$.ajax({
+			url : "/tag/" + hashtag,
+			dataType : "json",
+			headers : {
+				"Authorization" : readCookie("sessionId")
+			},
+			success : function(data) {
+				if(!data || !data.length){
+					return;
+				}
+				
+				displayMessages(data);
+			},
+			error : function(data) {
+				alert(JSON.parse(data.responseText)["message"]);
+			}
+		});
+	}
+
+	function getUrlParameter(sParam) {
+		var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL
+				.split('&'), sParameterName, i;
+
+		for (i = 0; i < sURLVariables.length; i++) {
+			sParameterName = sURLVariables[i].split('=');
+
+			if (sParameterName[0] === sParam) {
+				return sParameterName[1] === undefined ? true
+						: sParameterName[1];
+			}
+		}
+	};
+
+	$(document).ready(function() {
+		hashtag = getUrlParameter("tag");
+		if(!!!hashtag){
+			window.location = "/index.html";	
+			return;
+		}
+			
+		authenticate();
+		reloadFeed();
+	});
+</script>
+</head>
+<body>
+	<div style='text-align: center;'>
+		<h2>Tag</h2>
+		<table id="feed">
+			<tbody>
+				<tr>
+					<td>no messages</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

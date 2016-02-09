@@ -38,8 +38,7 @@ function updateAuthorsData(messages){
 				},
 				function(){
 					$(this).find(".glyphicon-remove-circle").hide();
-				}
-			);
+			});
 		},
 		error : function(data) {
 			alert(JSON.parse(data.responseText)["message"]);
@@ -60,6 +59,12 @@ function getAuthorCell(authorId){
 		+ "</div>";
 }
 
+function getUserCell(username){
+	return "<div style='margin: 5px;'>"
+		+ "<span style='margin-left: 8px;'><a href='/profile.html?user=" + username + "'>" + username + "</a></span>"
+		+ "</div>";
+}
+
 function htmlDecode(input){
 	  var e = document.createElement('div');
 	  e.innerHTML = input;
@@ -68,13 +73,6 @@ function htmlDecode(input){
 
 
 function displayMessageText(message){
-	var mentionsPattern = /\B@[a-z0-9_-]+/gi;
-	var mentions = message.match(mentionsPattern);
-	for(each in mentions){
-		message = message.replace(mentions[each], "<a href='/profile.html?user=" + 
-				mentions[each].substring(1) + "'>" + mentions[each] + "</a>"); 
-	}
-	
 	var tagsPattern = /\B#[a-z0-9_-]+/gi;
 	var htmlDecoded = htmlDecode(message);
 	if(htmlDecoded){
@@ -84,8 +82,42 @@ function displayMessageText(message){
 					tags[each].substring(1) + "'>" + tags[each] + "</a>"); 
 		}
 	}
+
+	var mentionsPattern = /\B@[a-z0-9_-]+/gi;
+	var mentions = message.match(mentionsPattern);
+	for(each in mentions){
+		message = message.replace(mentions[each], "<a href='/profile.html?user=" + 
+				mentions[each].substring(1) + "'>" + mentions[each] + "</a>"); 
+	}
 	
 	return "<td>" + message + "</td>";
+}
+
+function displayLikes(message){
+	var messHtml = "";
+	messHtml += "<td class='likesCell'>";
+	if(message["liked"]){
+		messHtml += "<a class='unlike' href='#'><span class='glyphicon glyphicon-thumbs-down'/></a>"; 
+	}else{
+		messHtml += "<a class='like' href='#'><span class='glyphicon glyphicon-thumbs-up'/></a>"; 
+	} 
+	
+	messHtml += "<a href='#' style='margin-left: 8px;' class='likesCount'>" + message.likes.length + "</a>";
+	
+	var likesUsers = "<div style='margin: 5px;'>People who liked it:</div><hr></hr>";
+	for(var each in message.likes){
+		likesUsers += getUserCell(message.likes[each]);
+	}
+
+	messHtml += '<div class="modal fade" tabindex="-1" role="dialog">\
+					<div class="modal-dialog">\
+						<div class="modal-content">\
+							' + likesUsers + '\
+						</div>\
+					</div>\
+				</div>';
+
+	return messHtml + "</td>";
 }
 
 function displayMessages(messages) {
@@ -100,11 +132,7 @@ function displayMessages(messages) {
 		var messHtml = "<tr class='messageRow' id='" + messages[mess]["_id"] + "'>";
 		messHtml += "<td class='authorCell' style='vertical-align: middle;'>" + getAuthorCell(messages[mess].authorId) + "</td>";
 		messHtml += "<td>" + displayMessageText(messages[mess].text) + "</td>";
-		if(messages[mess]["liked"]){
-			messHtml += "<td style='width: 30px;'><a class='unlike' href='#'><span class='glyphicon glyphicon-thumbs-down'/></a></td>";
-		}else{
-			messHtml += "<td style='width: 30px;'><a class='like' href='#'><span class='glyphicon glyphicon-thumbs-up'/></a></td>";
-		} 
+		messHtml += displayLikes(messages[mess]);
 		
 		var dateInUTC = new Date(messages[mess].date + 2 * 3600 * 1000).toISOString();
 		messHtml += "<td style='width: 80px;'><div class='date'>" + prettyDate(dateInUTC) + "</div></td>";
@@ -123,6 +151,16 @@ function displayMessages(messages) {
         e.preventDefault(); 
 		var messageId = $(this).parents(".messageRow").attr('id');
 		vote(messageId, 'unlike');
+	});
+	$(".likesCell").hover(function(){
+			$(this).find(".icon-question-sign").show();
+		},
+		function(){
+			$(this).find(".icon-question-sign").hide();
+	});	
+	$(".likesCount").click(function(e){
+        e.preventDefault();
+        $(this).next().modal('toggle');
 	});
 	
 	updateAuthorsData(messages);

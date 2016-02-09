@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.ws.WebServiceException;
+
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -91,6 +93,8 @@ public class ProfilesService {
 		
 		MongoCollection<Document> userCollection = this.mongoDB.getCollection("user");
 		Document current = userCollection.find(identifier, Document.class).first();
+		IfNull.throwRE(current, new WebServiceException("no such user"));
+		
 		DBRef userDBRef = new DBRef("user", current.get("_id"));
 		id = ((ObjectId) current.get("_id")).toString();
 		

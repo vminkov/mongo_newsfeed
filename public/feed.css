@@ -22,7 +22,7 @@ table {
 }
 
 .authorCell {
-	width: 140px;
+	width: 170px;
 	font-size: 14px;
 }
 
@@ -40,4 +40,9 @@ table {
 .silenceButton {
 	vertical-align: super;
 	margin: 5px;
+}
+
+.likesCell {
+	width: 60px;
+	text-align: center;
 }

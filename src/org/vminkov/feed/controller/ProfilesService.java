@@ -122,8 +122,10 @@ public class ProfilesService {
 				long posts8_16 = getPostsInHours(id, messagesCollection, 8, 16);
 				long posts16_24 = getPostsInHours(id, messagesCollection, 16, 0);
 
-				result.postsStats = new Float[] { new Float(posts24_4), new Float(posts4_8), new Float(posts8_16),
-						new Float(posts16_24) };
+				
+				double sum = posts24_4 + posts4_8 + posts8_16 + posts16_24;
+				result.postsStats = new Float[] { new Float(posts24_4 / sum * 100), new Float(posts4_8 / sum * 100), new Float(posts8_16 / sum * 100),
+						new Float(posts16_24 / sum * 100) };
 			}
 		}
 

@@ -17,10 +17,6 @@
 	margin-top: -100px;
 	margin-left: -125px;
 }
-
-#feed {
-	border: 1px solid black;
-}
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -32,7 +28,7 @@
 	
 	function reloadFeed() {
 		$.ajax({
-			url : "/tag/" + hashtag,
+			url : "/tag/" + hashtag + "/" + currentPage,
 			dataType : "json",
 			headers : {
 				"Authorization" : readCookie("sessionId")
@@ -77,15 +73,26 @@
 </script>
 </head>
 <body>
-	<div style='text-align: center;'>
-		<h2>Tag</h2>
-		<table id="feed">
-			<tbody>
-				<tr>
-					<td>no messages</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+		<table id="main">
+		<tbody>
+			<tr>
+				<td style="colspan: 3">
+					<table id="feed">
+						<tbody>
+							<tr>
+								<td>no messages</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;">
+					<a href="#" id="previousPage">&lt;&lt;</a>&nbsp;&nbsp;&nbsp;<a href="#" id="nextPage">&gt;&gt;</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	
 </body>
 </html>

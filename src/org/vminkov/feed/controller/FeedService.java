@@ -53,23 +53,26 @@ public class FeedService {
 		return convertMessages(user, messages);
 	}
 
-	@RequestMapping("/mentions/{username}")
+	@RequestMapping("/mentions/{username}/{page}")
 	public List<FeedMessage> getMentions(@RequestHeader("Authorization") String sessionId,
-			@PathVariable("username") String username) {
+			@PathVariable("username") String username,
+			@PathVariable("page") Integer pageNum) {
 		User user = usersManager.validateSession(sessionId);
 
 		Query<Message> messagesQuery = this.ds.find(Message.class)
 				.filter("author nin", 
 						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
-				.order("-date").search("@" + username);
+				.order("-date").search("@" + username).offset(PAGE_SIZE * pageNum)
+				.limit(PAGE_SIZE);;
 		List<Message> messages = messagesQuery.asList();
 
 		return convertMessages(user, messages);
 	}
 
-	@RequestMapping("/tag/{hashtag}")
+	@RequestMapping("/tag/{hashtag}/{page}")
 	public List<FeedMessage> getTagFeed(@RequestHeader("Authorization") String sessionId,
-			@PathVariable("hashtag") String hashtag) {
+			@PathVariable("hashtag") String hashtag,
+			@PathVariable("page") Integer pageNum) {
 		User user = usersManager.validateSession(sessionId);
 		
 		if(hashtag == null){
@@ -82,7 +85,8 @@ public class FeedService {
 		Query<Message> messagesQuery = this.ds.find(Message.class)
 				.filter("author nin", 
 						this.ds.find(User.class).field("_id").equal(user.get_id()).get().getSilenced())
-				.order("-date").search("#" + hashtag);
+				.order("-date").search("#" + hashtag).offset(PAGE_SIZE * pageNum)
+				.limit(PAGE_SIZE);;
 		List<Message> messages = messagesQuery.asList();
 
 		return convertMessages(user, messages);

@@ -7,9 +7,10 @@ table {
 	height: 600px;
 	width: 800px;
 	position: relative;
-	left: 35%;
-	margin: 90px;
-	margin-left: -140px;
+	left: 50%;
+	margin-left: -400px;
+	margin-top: 70px;
+	margin-bottom: 70px;
 }
 
 #feed {

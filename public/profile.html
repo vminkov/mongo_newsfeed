@@ -17,10 +17,6 @@
 	margin-top: -100px;
 	margin-left: -125px;
 }
-
-#feed {
-	border: 1px solid black;
-}
 </style>
 <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -32,7 +28,7 @@
 	
 	function reloadFeed() {
 		$.ajax({
-			url : "/mentions/" + currentUserName,
+			url : "/mentions/" + currentUserName + "/" + currentPage,
 			dataType : "json",
 			headers : {
 				"Authorization" : readCookie("sessionId")
@@ -120,9 +116,7 @@
 </script>
 </head>
 <body>
-	<div style='text-align: center;'>
-		<h2>Profile view</h2>
-		<table style='text-align: center; width: 100%;' id='statsTable'>
+		<table style='text-align: center; width: 100%;	margin-top: 50px;' id='statsTable'>
 			<tr>
 				<td colspan="2" id="username"></td>
 			</tr>
@@ -144,13 +138,25 @@
 				<td id="posts16_24"></td>
 			</tr>
 		</table>
-		<table id="feed" style='text-align: left;'>
+		<table id="main">
 			<tbody>
 				<tr>
-					<td>no mentions</td>
+					<td style="colspan: 3">
+						<table id="feed">
+							<tbody>
+								<tr>
+									<td>no mentions</td>
+								</tr>
+							</tbody>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center;">
+						<a href="#" id="previousPage">&lt;&lt;</a>&nbsp;&nbsp;&nbsp;<a href="#" id="nextPage">&gt;&gt;</a>
+					</td>
 				</tr>
 			</tbody>
 		</table>
-	</div>
 </body>
 </html>
